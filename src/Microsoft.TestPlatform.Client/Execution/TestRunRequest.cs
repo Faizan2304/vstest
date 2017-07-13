@@ -16,10 +16,18 @@ namespace Microsoft.VisualStudio.TestPlatform.Client.Execution
 
     using ClientResources = Microsoft.VisualStudio.TestPlatform.Client.Resources.Resources;
     using System.Collections.ObjectModel;
+    using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Interfaces;
+    using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
+    using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.ObjectModel;
 
     public class TestRunRequest : ITestRunRequest, ITestRunEventsHandler
     {
-        internal TestRunRequest(TestRunCriteria testRunCriteria, IProxyExecutionManager executionManager)
+        internal TestRunRequest(TestRunCriteria testRunCriteria, IProxyExecutionManager executionManager) :
+            this(testRunCriteria, executionManager, JsonDataSerializer.Instance)
+        {
+        }
+
+        internal TestRunRequest(TestRunCriteria testRunCriteria, IProxyExecutionManager executionManager, IDataSerializer dataSerializer)
         {
             Debug.Assert(testRunCriteria != null, "Test run criteria cannot be null");
             Debug.Assert(executionManager != null, "ExecutionManager cannot be null");
@@ -27,8 +35,8 @@ namespace Microsoft.VisualStudio.TestPlatform.Client.Execution
             EqtTrace.Verbose("TestRunRequest.ExecuteAsync: Creating test run request.");
             this.testRunCriteria = testRunCriteria;
             this.ExecutionManager = executionManager;
-
             this.State = TestRunState.Pending;
+            this.dataSerializer = dataSerializer;
         }
 
         #region ITestRunRequest
@@ -283,10 +291,15 @@ namespace Microsoft.VisualStudio.TestPlatform.Client.Execution
                 {
                     this.runRequestTimeTracker.Stop();
 
+                    // Handle HandleTestRunStatsChange event if there are some tests in the last chunk.
+                    // As a protocol we dont want to send the tests in the Execution complete event so that programming on top of
+                    // TestPlatform client is easier.
                     if (lastChunkArgs != null)
                     {
-                        // Raised the changed event also                         
-                        this.OnRunStatsChange.SafeInvoke(this, lastChunkArgs, "TestRun.RunStatsChanged");
+                        ConvertToRawMessageAndSend(MessageType.TestRunStatsChange, lastChunkArgs);
+
+                        // Raised the changed event also
+                        HandleTestRunStatsChange(lastChunkArgs);
                     }
 
                     TestRunCompleteEventArgs runCompletedEvent =
@@ -297,6 +310,17 @@ namespace Microsoft.VisualStudio.TestPlatform.Client.Execution
                             runCompleteArgs.Error,
                             runContextAttachments as Collection<AttachmentSet>,
                             this.runRequestTimeTracker.Elapsed);
+
+                    var testRunCompletePayload = new TestRunCompletePayload()
+                    {
+                        ExecutorUris = executorUris,
+                        LastRunTests = null,
+                        RunAttachments = runContextAttachments,
+                        TestRunCompleteArgs = runCompletedEvent
+                    };
+
+                    // we have to send rawmessages for ExecutionComplete as we block the runcomplete actual raw messages
+                    ConvertToRawMessageAndSend(MessageType.ExecutionComplete, testRunCompletePayload);
 
                     // Ignore the time sent (runCompleteArgs.ElapsedTimeInRunningTests) 
                     // by either engines - as both calculate at different points
@@ -393,7 +417,15 @@ namespace Microsoft.VisualStudio.TestPlatform.Client.Execution
         /// <param name="rawMessage"></param>
         public void HandleRawMessage(string rawMessage)
         {
-            this.OnRawMessageReceived?.Invoke(this, rawMessage);
+            var message = this.dataSerializer.DeserializeMessage(rawMessage);
+
+            // Do not send ExecutionComplete raw message from here as it is taking care by HandleTestRunComplete
+            // As a protocol we dont want to send the tests in the Execution complete event so that programming on top of
+            // TestPlatform client is easier.
+            if (!string.Equals(MessageType.ExecutionComplete, message.MessageType))
+            {
+                this.OnRawMessageReceived?.Invoke(this, rawMessage);
+            }
         }
 
         /// <summary>
@@ -440,6 +472,12 @@ namespace Microsoft.VisualStudio.TestPlatform.Client.Execution
             EqtTrace.Info("TestRunRequest.Dispose: Completed.");
         }
 
+        private void ConvertToRawMessageAndSend(string messageType, object payload)
+        {
+            var rawMessage = this.dataSerializer.SerializePayload(messageType, payload);
+            this.OnRawMessageReceived?.Invoke(this, rawMessage);
+        }
+
         /// <summary>
         /// The criteria/config for this test run request.
         /// </summary>
@@ -464,5 +502,7 @@ namespace Microsoft.VisualStudio.TestPlatform.Client.Execution
         /// Tracks the time taken by each run request
         /// </summary>
         private Stopwatch runRequestTimeTracker;
+
+        private IDataSerializer dataSerializer;
     }
 }

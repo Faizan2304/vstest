@@ -7,7 +7,9 @@ namespace Microsoft.VisualStudio.TestPlatform.Client.Discovery
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading;
-
+    using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
+    using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Interfaces;
+    using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.ObjectModel;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Engine;
@@ -24,10 +26,22 @@ namespace Microsoft.VisualStudio.TestPlatform.Client.Discovery
         /// </summary>
         /// <param name="criteria">Discovery criterion.</param>
         /// <param name="discoveryManager">Discovery manager instance.</param>
-        internal DiscoveryRequest(DiscoveryCriteria criteria, IProxyDiscoveryManager discoveryManager)
+        internal DiscoveryRequest(DiscoveryCriteria criteria, IProxyDiscoveryManager discoveryManager) :
+            this(criteria, discoveryManager, JsonDataSerializer.Instance)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DiscoveryRequest"/> class.
+        /// </summary>
+        /// <param name="criteria">Discovery criterion.</param>
+        /// <param name="discoveryManager">Discovery manager instance.</param>
+        /// <param name="dataSerializer">Data serializer</param>
+        internal DiscoveryRequest(DiscoveryCriteria criteria, IProxyDiscoveryManager discoveryManager, IDataSerializer dataSerializer)
         {
             this.DiscoveryCriteria = criteria;
             this.DiscoveryManager = discoveryManager;
+            this.dataSerializer = dataSerializer;
         }
 
         /// <summary>
@@ -217,14 +231,25 @@ namespace Microsoft.VisualStudio.TestPlatform.Client.Discovery
 
                 try
                 {
-                    // Raise onDiscoveredTests event if there are some tests in the last chunk. 
-                    // (We dont want to send the tests in the discovery complete event so that programming on top of 
-                    // RS client is easier i.e. user does not have to listen on discovery complete event.)
+                    // Call HandleDiscoveredTests event if there are some tests in the last chunk.
+                    // As a protocol we dont want to send the tests in the discovery complete event so that programming on top of
+                    // TestPlatform client is easier.
                     if (lastChunk != null && lastChunk.Count() > 0)
                     {
+                        ConvertToRawMessageAndSend(MessageType.TestCasesFound, lastChunk);
                         this.OnDiscoveredTests.SafeInvoke(this, new DiscoveredTestsEventArgs(lastChunk), "DiscoveryRequest.DiscoveryComplete");
                     }
 
+                    // To send a raw message for DiscoveryComplete - we need to create raw message from a payload object
+                    var testDiscoveryCompletePayload = new DiscoveryCompletePayload()
+                    {
+                        TotalTests = totalTests,
+                        IsAborted = isAborted,
+                        LastDiscoveredTests = null
+                    };
+
+                    // we have to send raw messages of DiscoveryComplete as we block the discoverycomplete actual raw messages
+                    this.ConvertToRawMessageAndSend(MessageType.DiscoveryComplete, testDiscoveryCompletePayload);
                     this.OnDiscoveryComplete.SafeInvoke(this, new DiscoveryCompleteEventArgs(totalTests, isAborted), "DiscoveryRequest.DiscoveryComplete");
                 }
                 finally
@@ -324,9 +349,31 @@ namespace Microsoft.VisualStudio.TestPlatform.Client.Discovery
         /// <param name="rawMessage">Raw message.</param>
         public void HandleRawMessage(string rawMessage)
         {
-            this.OnRawMessageReceived?.Invoke(this, rawMessage);
+            var message = this.dataSerializer.DeserializeMessage(rawMessage);
+
+            // Do not send DiscoveryComplete raw message from here as it is taking care by HandleDiscoveryComplete
+            // As a protocol we dont want to send the tests in the discovery complete event so that programming on top of
+            // TestPlatform client is easier.
+            if (!string.Equals(MessageType.DiscoveryComplete, message.MessageType))
+            {
+                this.OnRawMessageReceived?.Invoke(this, rawMessage);
+            }
         }
 
+        #endregion
+
+        #region private method
+
+        /// <summary>
+        /// To send message to IDE output window use HandleRawMessage
+        /// </summary>
+        /// <param name="messageType"></param>
+        /// <param name="payload"></param>
+        private void ConvertToRawMessageAndSend(string messageType, object payload)
+        {
+            var rawMessage = this.dataSerializer.SerializePayload(messageType, payload);
+            this.OnRawMessageReceived?.Invoke(this, rawMessage);
+        }
         #endregion
 
         #region IDisposable implementation
@@ -396,6 +443,8 @@ namespace Microsoft.VisualStudio.TestPlatform.Client.Discovery
         /// Whether or not the test discovery is in progress.
         /// </summary>
         private bool discoveryInProgress;
+
+        private IDataSerializer dataSerializer;
 
         #endregion
     }

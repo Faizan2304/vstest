@@ -83,7 +83,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Discovery
 
             try
             {
-                EqtTrace.Info("TestDiscoveryManager.DoDiscovery: Background test discovery started.");
+                EqtTrace.Info("DiscoveryManager.DiscoverTests: Background test discovery started.");
 
 
                 this.testDiscoveryEventsHandler = eventHandler;
@@ -112,24 +112,24 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Discovery
             finally
             {
                 // Discovery complete. Raise the DiscoveryCompleteEvent.
-                EqtTrace.Verbose("TestDiscoveryManager.DoDiscovery: Background Test Discovery complete.");
+                EqtTrace.Verbose("DiscoveryManager.DiscoverTests: Background Test Discovery complete.");
 
                 var totalDiscoveredTestCount = discoveryResultCache.TotalDiscoveredTests;
                 var lastChunk = discoveryResultCache.Tests;
 
-                EqtTrace.Verbose("TestDiscoveryManager.DiscoveryComplete: Calling DiscoveryComplete callback.");
+                EqtTrace.Verbose("DiscoveryManager.DiscoverTests: Calling DiscoveryComplete callback.");
 
-                if (eventHandler != null)
+                if (this.testDiscoveryEventsHandler != null)
                 {
-                    eventHandler.HandleDiscoveryComplete(totalDiscoveredTestCount, lastChunk, false);
+                    testDiscoveryEventsHandler.HandleDiscoveryComplete(totalDiscoveredTestCount, lastChunk, false);
+
+                    EqtTrace.Verbose("DiscoveryManager.DiscoverTests: Called DiscoveryComplete callback.");
                 }
                 else
                 {
                     EqtTrace.Warning(
-                        "DiscoveryManager: Could not pass the discovery complete message as the callback is null.");
+                        "DiscoveryManager.DiscoverTests: Could not pass the discovery complete message as the callback is null.");
                 }
-
-                EqtTrace.Verbose("TestDiscoveryManager.DiscoveryComplete: Called DiscoveryComplete callback.");
 
                 this.testDiscoveryEventsHandler = null;
             }
@@ -147,6 +147,11 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Discovery
         {
             if (this.testDiscoveryEventsHandler != null)
             {
+                if (EqtTrace.IsVerboseEnabled)
+                {
+                    var allTestCases = string.Join(" ", testCases.Select(t => t.DisplayName).ToList());
+                    EqtTrace.Verbose("DiscoveryManager.OnReportTestCases: Calling HandleDiscoveredTests eventHandler" + allTestCases);
+                }
                 this.testDiscoveryEventsHandler.HandleDiscoveredTests(testCases);
             }
             else
@@ -194,7 +199,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Discovery
                 var errorMessage = string.Format(CultureInfo.CurrentCulture, CrossPlatEngineResources.NoValidSourceFoundForDiscovery, sourcesString);
                 logger.SendMessage(TestMessageLevel.Warning, errorMessage);
 
-                EqtTrace.Warning("TestDiscoveryManager: None of the source {0} is valid. ", sourcesString);
+                EqtTrace.Warning("DiscoveryManager: None of the source {0} is valid. ", sourcesString);
 
                 return verifiedSources;
             }
@@ -202,7 +207,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Discovery
             // Log the sources from where tests are being discovered
             if (EqtTrace.IsInfoEnabled)
             {
-                EqtTrace.Info("TestDiscoveryManager: Discovering tests from sources {0}", string.Join(",", verifiedSources.ToArray()));
+                EqtTrace.Info("DiscoveryManager: Discovering tests from sources {0}", string.Join(",", verifiedSources.ToArray()));
             }
 
             return verifiedSources;
@@ -213,7 +218,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Discovery
             if (EqtTrace.IsInfoEnabled)
             {
                 EqtTrace.Info(
-                    "TestDiscoveryManager.RunMessage: calling TestRunMessage({0}, {1}) callback.",
+                    "DiscoveryManager.RunMessage: calling TestRunMessage({0}, {1}) callback.",
                     e.Level,
                     e.Message);
             }
