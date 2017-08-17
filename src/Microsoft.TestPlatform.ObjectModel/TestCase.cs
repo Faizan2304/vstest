@@ -16,6 +16,9 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
     /// Stores information about a test case.
     /// </summary>
     [DataContract]
+#if NET451
+    [Serializable]
+#endif
     public sealed class TestCase : TestObject
     {
 #if TODO

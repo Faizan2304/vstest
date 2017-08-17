@@ -4,8 +4,10 @@
 namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine
 {
     using System;
+    using System.Collections.Generic;
     using System.Linq;
-
+    using Microsoft.VisualStudio.TestPlatform.Common;
+    using Microsoft.VisualStudio.TestPlatform.Common.ExtensionFramework;
     using Microsoft.VisualStudio.TestPlatform.Common.Hosting;
     using Microsoft.VisualStudio.TestPlatform.Common.Logging;
     using Microsoft.VisualStudio.TestPlatform.Common.Utilities;
@@ -93,7 +95,11 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine
 
             if (parallelLevel <= 1 && !isDataCollectorEnabled && ShouldRunInNoIsolation(testRunCriteria.TestRunSettings))
             {
-                return new NoIsolationProxyexecutionManager();
+                IProxyExecutionManager executionManager = null;
+#if NET451
+                executionManager = new AppDomainExecutionManagerInvoker(testRunCriteria.Sources.ToList()[0]);
+#endif
+                return executionManager ?? new NoIsolationProxyexecutionManager();
             }
 
             // SetupChannel ProxyExecutionManager with data collection if data collectors are specififed in run settings.
@@ -134,7 +140,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine
             return this.testExtensionManager ?? (this.testExtensionManager = new TestExtensionManager());
         }
 
-        #endregion
+#endregion
 
         private static int GetDistinctNumberOfSources(TestRunCriteria testRunCriteria)
         {

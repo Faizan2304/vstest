@@ -12,6 +12,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
 
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client.Interfaces;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Resources;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// Defines the testRun criterion
@@ -172,6 +173,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
         /// <param name="testHostLauncher">
         /// Test host launcher. If null then default will be used.
         /// </param>
+        [JsonConstructor]
         public TestRunCriteria(
             Dictionary<string, IEnumerable<string>> adapterSourceMap,
             long frequencyOfRunStatsChangeEvent,

@@ -3,6 +3,7 @@
 
 namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
 {
+    using System;
     using System.Collections.Generic;
     using System.Runtime.Serialization;
 
@@ -12,6 +13,9 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
     /// Defines the test run stats header
     /// </summary>
     [DataContract]
+#if NET451
+    [Serializable]
+#endif
     public class TestRunStatistics : ITestRunStatistics
     {
         /// <summary>

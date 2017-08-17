@@ -15,6 +15,9 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
     /// Represents the result of a test case.
     /// </summary>
     [DataContract]
+#if NET451
+    [Serializable]
+#endif
     public sealed class TestResult : TestObject
     {
         #region Constructor
@@ -252,6 +255,9 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
     /// Represents the test result message.
     /// </summary>
     [DataContract]
+#if NET451
+    [Serializable]
+#endif
     public class TestResultMessage
     {
         // Bugfix: 297759 Moving the category from the resources to the code

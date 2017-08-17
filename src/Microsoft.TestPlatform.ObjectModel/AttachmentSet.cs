@@ -11,6 +11,9 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
     /// Represents a set of attachments. 
     /// </summary>
     [DataContract]
+#if NET451
+    [Serializable]
+#endif
     public class AttachmentSet
     {
         /// <summary>

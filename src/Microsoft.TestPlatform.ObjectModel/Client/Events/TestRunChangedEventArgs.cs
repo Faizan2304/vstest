@@ -14,6 +14,9 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
     /// The test run changed event args that provides the test results available.
     /// </summary>
     [DataContract]
+#if NET451
+    [Serializable]
+#endif
     public class TestRunChangedEventArgs : EventArgs
     {
         /// <summary>

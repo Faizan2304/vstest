@@ -12,6 +12,9 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
     public delegate bool ValidateValueCallback(object value);
 
     [DataContract]
+#if NET451
+    [Serializable]
+#endif
     public class TestProperty : IEquatable<TestProperty>
     {
         #region Fields

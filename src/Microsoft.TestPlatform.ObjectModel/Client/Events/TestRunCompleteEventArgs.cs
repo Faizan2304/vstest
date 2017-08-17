@@ -13,6 +13,9 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
     /// Event arguments used when a test run has completed.
     /// </summary>
     [DataContract]
+#if NET451
+     [Serializable]
+#endif
     public class TestRunCompleteEventArgs : EventArgs
     {
         /// <summary>

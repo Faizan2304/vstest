@@ -19,7 +19,11 @@ namespace Microsoft.VisualStudio.TestPlatform.Client.Execution
     using Microsoft.VisualStudio.TestPlatform.Utilities;
     using ClientResources = Microsoft.VisualStudio.TestPlatform.Client.Resources.Resources;
 
-    public class TestRunRequest : ITestRunRequest, ITestRunEventsHandler
+    public class TestRunRequest :
+#if NET451
+        MarshalByRefObject,
+#endif
+        ITestRunRequest, ITestRunEventsHandler
     {
         /// <summary>
         /// The criteria/config for this test run request.
