@@ -4,6 +4,7 @@
 namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
 {
     using System;
+    using System.Collections;
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
@@ -17,6 +18,12 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
         /// Singleton Instance of this class
         /// </summary>
         protected static T instance = default(T);
+
+        /// <summary>
+        /// LockObject to iterate our sourceEnumerator in parallel
+        /// We can use the sourceEnumerator itself as lockObject, but since its a changing object - it's risky to use it as one
+        /// </summary>
+        protected object sourceEnumeratorLockObject = new object();
 
         /// <summary>
         /// Remove and dispose a manager from concurrent list of manager.
@@ -92,6 +99,27 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
             }
 
             instance = default(T);
+        }
+
+        /// <summary>
+        /// Fetches the next data object for the concurrent executor to work on
+        /// </summary>
+        /// <param name="source">sourcedata to work on - sourcefile or testCaseList</param>
+        /// <returns>True, if data exists. False otherwise</returns>
+        protected bool TryFetchNextSource<Y>(IEnumerator enumerator, out Y source)
+        {
+            source = default(Y);
+            var hasNext = false;
+            lock (sourceEnumeratorLockObject)
+            {
+                if (enumerator != null && enumerator.MoveNext())
+                {
+                    source = (Y)enumerator.Current;
+                    hasNext = source != null;
+                }
+            }
+
+            return hasNext;
         }
 
         public void UpdateParallelLevel(int parallelLevel)

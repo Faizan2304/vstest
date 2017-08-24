@@ -39,7 +39,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
 
         private NoIsolationInAppDomain proxyExecutionManagerInvoker;
 
-        public bool IsInitialized => throw new NotImplementedException();
+        public bool IsInitialized { get; private set; } = false;
 
         public AppDomainExecutionManagerInvoker(string testSourcePath)
         {
@@ -206,16 +206,20 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
 
         public void Initialize()
         {
-            var extensions = new List<string>();
-
-            if (TestPluginCache.Instance.PathToExtensions != null)
+            if (this.IsInitialized)
             {
-                extensions.AddRange(TestPluginCache.Instance.PathToExtensions.Where(ext => ext.EndsWith(TestPlatformConstants.TestAdapterEndsWithPattern, StringComparison.OrdinalIgnoreCase)));
+                var extensions = new List<string>();
+
+                if (TestPluginCache.Instance.PathToExtensions != null)
+                {
+                    extensions.AddRange(TestPluginCache.Instance.PathToExtensions.Where(ext => ext.EndsWith(TestPlatformConstants.TestAdapterEndsWithPattern, StringComparison.OrdinalIgnoreCase)));
+                }
+
+                extensions.AddRange(TestPluginCache.Instance.DefaultExtensionPaths);
+
+                this.proxyExecutionManagerInvoker.Initialize(extensions);
+                this.IsInitialized = true;
             }
-
-            extensions.AddRange(TestPluginCache.Instance.DefaultExtensionPaths);
-
-            this.proxyExecutionManagerInvoker.Initialize(extensions);
         }
 
         public int StartTestRun(TestRunCriteria testRunCriteria, ITestRunEventsHandler eventHandler)
