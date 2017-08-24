@@ -82,26 +82,6 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
                     null);
         }
 
-        public void UnloadAppDomain()
-        {
-            try
-            {
-                if (appDomain != null)
-                {
-                    AppDomain.Unload(appDomain);
-                }
-
-                if (!string.IsNullOrWhiteSpace(this.mergedTempConfigFile) && File.Exists(mergedTempConfigFile))
-                {
-                    File.Delete(mergedTempConfigFile);
-                }
-            }
-            catch
-            {
-                // ignore
-            }
-        }
-
         private AppDomain CreateNewAppDomain(string testSourcePath)
         {
             var appDomainSetup = new AppDomainSetup();
@@ -257,6 +237,22 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
 
         public void Close()
         {
+    try
+            {
+                if (appDomain != null)
+                {
+                    AppDomain.Unload(appDomain);
+                }
+
+                if (!string.IsNullOrWhiteSpace(this.mergedTempConfigFile) && File.Exists(mergedTempConfigFile))
+                {
+                    File.Delete(mergedTempConfigFile);
+                }
+            }
+            catch
+            {
+                // ignore
+            }
         }
     }
 
