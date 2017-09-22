@@ -119,7 +119,7 @@ namespace Microsoft.VisualStudio.TestPlatform.Common.DataCollector
 
         private void UpdateConfigurationElement()
         {
-            var frameWork = XmlRunSettingsUtilities.GetRunConfigurationNode(this.SettingsXml).TargetFrameworkVersion;
+            var frameWork = XmlRunSettingsUtilities.GetRunConfigurationNode(this.SettingsXml).TargetFrameworkVersionTpV2;
 
             if (this.ConfigurationElement == null)
             {

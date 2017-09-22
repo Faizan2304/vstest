@@ -301,22 +301,22 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
             }
         }
 
-        ///// <summary>
-        ///// Gets or sets the target Framework this run is targeting. Possible values are Framework3.5|Framework4.0|Framework4.5
-        ///// </summary>
-        //public Framework TargetFrameworkVersion
-        //{
-        //    get
-        //    {
-        //        return this.framework;
-        //    }
+        /// <summary>
+        /// Gets or sets the target Framework this run is targeting. Possible values are Framework3.5|Framework4.0|Framework4.5
+        /// </summary>
+        public Framework TargetFrameworkVersionTpV2
+        {
+            get
+            {
+                return this.framework;
+            }
 
-        //    set
-        //    {
-        //        this.framework = value;
-        //        this.TargetFrameworkSet = true;
-        //    }
-        //}
+            set
+            {
+                this.framework = value;
+                this.TargetFrameworkSet = true;
+            }
+        }
 
         /// <summary>
         /// Target Framework this run is targeting. Possible values are Framework3.5|Framework4.0|Framework4.5
@@ -535,7 +535,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
             root.AppendChild(disableParallelization);
 
             XmlElement targetFrameworkVersion = doc.CreateElement("TargetFrameworkVersion");
-            targetFrameworkVersion.InnerXml = this.TargetFrameworkVersion.ToString();
+            targetFrameworkVersion.InnerXml = this.TargetFrameworkVersionTpV2.ToString();
             root.AppendChild(targetFrameworkVersion);
 
             XmlElement executionThreadApartmentState = doc.CreateElement("ExecutionThreadApartmentState");
@@ -772,7 +772,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
                                     Resources.Resources.InvalidSettingsIncorrectValue, Constants.RunConfigurationSettingsName, value, elementName));
                             }
 
-                            //runConfiguration.TargetFrameworkVersion = frameworkType;
+                            runConfiguration.TargetFrameworkVersionTpV2 = frameworkType;
                             break;
 
                         case "TestAdaptersPaths":

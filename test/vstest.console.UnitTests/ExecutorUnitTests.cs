@@ -91,7 +91,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CommandLine.UnitTests
             var exitCode = new Executor(mockOutput, this.mockTestPlatformEventSource.Object).Execute(null);
             RunConfiguration runConfiguration = XmlRunSettingsUtilities.GetRunConfigurationNode(RunSettingsManager.Instance.ActiveRunSettings.SettingsXml);
             Assert.AreEqual(runConfiguration.ResultsDirectory, Constants.DefaultResultsDirectory);
-            Assert.AreEqual(runConfiguration.TargetFrameworkVersion.ToString(), Framework.DefaultFramework.ToString());
+            Assert.AreEqual(runConfiguration.TargetFrameworkVersionTpV2.ToString(), Framework.DefaultFramework.ToString());
             Assert.AreEqual(runConfiguration.TargetPlatform, Constants.DefaultPlatform);
         }
 

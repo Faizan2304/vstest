@@ -261,7 +261,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine
                 (runConfiguration.TargetPlatform == Architecture.X86 || runConfiguration.TargetPlatform == Architecture.AnyCPU) &&
                 !runConfiguration.DisableAppDomain &&
                 !runConfiguration.DesignMode &&
-                runConfiguration.TargetFrameworkVersion.Name.IndexOf("netframework", StringComparison.OrdinalIgnoreCase) >= 0)
+                runConfiguration.TargetFrameworkVersionTpV2.Name.IndexOf("netframework", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 if (EqtTrace.IsInfoEnabled)
                 {

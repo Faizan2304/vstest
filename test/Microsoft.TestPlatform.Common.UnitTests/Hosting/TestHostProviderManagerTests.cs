@@ -148,7 +148,7 @@ namespace TestPlatform.Common.UnitTests.Logging
             public bool CanExecuteCurrentRunConfiguration(string runsettingsXml)
             {
                 var config = XmlRunSettingsUtilities.GetRunConfigurationNode(runsettingsXml);
-                var framework = config.TargetFrameworkVersion;
+                var framework = config.TargetFrameworkVersionTpV2;
                 this.Shared = !config.DisableAppDomain;
 
                 // This is expected to be called once every run so returning a new instance every time.
@@ -226,7 +226,7 @@ namespace TestPlatform.Common.UnitTests.Logging
             public bool CanExecuteCurrentRunConfiguration(string runsettingsXml)
             {
                 var config = XmlRunSettingsUtilities.GetRunConfigurationNode(runsettingsXml);
-                var framework = config.TargetFrameworkVersion;
+                var framework = config.TargetFrameworkVersionTpV2;
                 this.Shared = !config.DisableAppDomain;
 
                 // This is expected to be called once every run so returning a new instance every time.

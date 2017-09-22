@@ -21,7 +21,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
         /// <summary>
         /// Clear the extensions
         /// </summary>
-        //void ClearExtensions();
+        void ClearExtensions();
 
         /// <summary>
         /// Creates a discovery request
@@ -29,7 +29,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
         /// <param name="requestData">Providing common services and data for Discovery</param>
         /// <param name="discoveryCriteria">Specifies the discovery parameters</param>
         /// <returns>DiscoveryRequest object</returns>
-        //IDiscoveryRequest CreateDiscoveryRequest(IRequestData requestData, DiscoveryCriteria discoveryCriteria);
+        IDiscoveryRequest CreateDiscoveryRequest(IRequestData requestData, DiscoveryCriteria discoveryCriteria);
 
         /// <summary>
         /// Creates a test run request.
@@ -37,7 +37,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
         /// <param name="requestData">Providing common services and data for Execution</param>
         /// <param name="testRunCriteria">Specifies the test run criteria</param>
         /// <returns>RunRequest object</returns>
-        //ITestRunRequest CreateTestRunRequest(IRequestData requestData, TestRunCriteria testRunCriteria);
+        ITestRunRequest CreateTestRunRequest(IRequestData requestData, TestRunCriteria testRunCriteria);
 
         //TPV1
         /// <summary>

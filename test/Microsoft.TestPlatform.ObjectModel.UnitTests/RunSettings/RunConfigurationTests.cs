@@ -21,7 +21,7 @@ namespace Microsoft.TestPlatform.ObjectModel.UnitTests
 
             // Verify Default
             Assert.AreEqual(Constants.DefaultPlatform, runConfiguration.TargetPlatform);
-            Assert.AreEqual(Framework.DefaultFramework, runConfiguration.TargetFrameworkVersion);
+            Assert.AreEqual(Framework.DefaultFramework, runConfiguration.TargetFrameworkVersionTpV2);
             Assert.AreEqual(Constants.DefaultBatchSize, runConfiguration.BatchSize);
             Assert.AreEqual(0, runConfiguration.TestSessionTimeout);
             Assert.AreEqual(Constants.DefaultResultsDirectory, runConfiguration.ResultsDirectory);
@@ -88,9 +88,9 @@ namespace Microsoft.TestPlatform.ObjectModel.UnitTests
             Assert.AreEqual(Architecture.X64, runConfiguration.TargetPlatform);
 
             var expectedFramework = Framework.FromString("FrameworkCore10");
-            var actualFramework = runConfiguration.TargetFrameworkVersion;
-            Assert.AreEqual(expectedFramework.Name, runConfiguration.TargetFrameworkVersion.Name);
-            Assert.AreEqual(expectedFramework.Version, runConfiguration.TargetFrameworkVersion.Version);
+            var actualFramework = runConfiguration.TargetFrameworkVersionTpV2;
+            Assert.AreEqual(expectedFramework.Name, runConfiguration.TargetFrameworkVersionTpV2.Name);
+            Assert.AreEqual(expectedFramework.Version, runConfiguration.TargetFrameworkVersionTpV2.Version);
 
             Assert.AreEqual("TestResults", runConfiguration.ResultsDirectory);
 

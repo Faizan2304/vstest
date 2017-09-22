@@ -317,7 +317,7 @@ namespace Microsoft.VisualStudio.TestPlatform.Common.DataCollector.UnitTests
             this.SetupMockDataCollector((XmlElement a, DataCollectionEvents b, DataCollectionSink c, DataCollectionLogger d, DataCollectionEnvironmentContext e) => { b.TestCaseStart += (sender, eventArgs) => isStartInvoked = true; });
 
             this.dataCollectionManager.InitializeDataCollectors(this.dataCollectorSettings);
-            var args = new TestCaseStartEventArgs(new TestCase());
+            var args = new Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection.TestCaseStartEventArgs(new TestCase());
             this.dataCollectionManager.TestCaseStarted(args);
 
             Assert.IsTrue(isStartInvoked);
@@ -329,7 +329,7 @@ namespace Microsoft.VisualStudio.TestPlatform.Common.DataCollector.UnitTests
             var isStartInvoked = false;
             this.SetupMockDataCollector((XmlElement a, DataCollectionEvents b, DataCollectionSink c, DataCollectionLogger d, DataCollectionEnvironmentContext e) => { b.TestCaseStart += (sender, eventArgs) => isStartInvoked = true; });
 
-            var args = new TestCaseStartEventArgs(new TestCase());
+            var args = new Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection.TestCaseStartEventArgs(new TestCase());
             this.dataCollectionManager.TestCaseStarted(args);
 
             Assert.IsFalse(isStartInvoked);
@@ -342,7 +342,7 @@ namespace Microsoft.VisualStudio.TestPlatform.Common.DataCollector.UnitTests
             this.SetupMockDataCollector((XmlElement a, DataCollectionEvents b, DataCollectionSink c, DataCollectionLogger d, DataCollectionEnvironmentContext e) => { b.TestCaseEnd += (sender, eventArgs) => isEndInvoked = true; });
 
             this.dataCollectionManager.InitializeDataCollectors(this.dataCollectorSettings);
-            var args = new TestCaseEndEventArgs();
+            var args = new Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection.TestCaseEndEventArgs();
             this.dataCollectionManager.TestCaseEnded(args);
 
             Assert.IsTrue(isEndInvoked);
@@ -358,7 +358,7 @@ namespace Microsoft.VisualStudio.TestPlatform.Common.DataCollector.UnitTests
                 b.TestCaseEnd += (sender, eventArgs) => isEndInvoked = true;
             });
 
-            var args = new TestCaseEndEventArgs();
+            var args = new Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection.TestCaseEndEventArgs();
             Assert.IsFalse(isEndInvoked);
         }
 
