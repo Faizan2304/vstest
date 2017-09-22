@@ -9,7 +9,7 @@ namespace Microsoft.VisualStudio.TestPlatform.Common.Logging
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
     using Microsoft.VisualStudio.TestPlatform.Utilities;
 
-    using ObjectModelCommonResources = Microsoft.VisualStudio.TestPlatform.ObjectModel.Resources.CommonResources;
+    using ObjectModelCommonResources = Microsoft.VisualStudio.TestPlatform.ObjectModel.CommonResources;
     
     /// <summary>
     /// The test session message logger.

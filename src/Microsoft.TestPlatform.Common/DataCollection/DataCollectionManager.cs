@@ -266,7 +266,7 @@ namespace Microsoft.VisualStudio.TestPlatform.Common.DataCollector
         }
 
         /// <inheritdoc/>
-        public void TestCaseStarted(TestCaseStartEventArgs testCaseStartEventArgs)
+        public void TestCaseStarted(Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection.TestCaseStartEventArgs testCaseStartEventArgs)
         {
             if (!this.isDataCollectionEnabled)
             {
@@ -280,7 +280,7 @@ namespace Microsoft.VisualStudio.TestPlatform.Common.DataCollector
         }
 
         /// <inheritdoc/>
-        public Collection<AttachmentSet> TestCaseEnded(TestCaseEndEventArgs testCaseEndEventArgs)
+        public Collection<AttachmentSet> TestCaseEnded(Microsoft.VisualStudio.TestPlatform.ObjectModel.DataCollection.TestCaseEndEventArgs testCaseEndEventArgs)
         {
             if (!this.isDataCollectionEnabled)
             {

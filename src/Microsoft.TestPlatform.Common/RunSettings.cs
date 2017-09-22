@@ -20,7 +20,7 @@ namespace Microsoft.VisualStudio.TestPlatform.Common
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Utilities;
 
     using CommonResources = Microsoft.VisualStudio.TestPlatform.Common.Resources.Resources;
-    using ObjectModelCommonResources = Microsoft.VisualStudio.TestPlatform.ObjectModel.Resources.CommonResources;
+    using ObjectModelCommonResources = Microsoft.VisualStudio.TestPlatform.ObjectModel.CommonResources;
 
     /// <summary>
     /// Used for loading settings for a run.

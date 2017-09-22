@@ -17,7 +17,7 @@ namespace Microsoft.VisualStudio.TestPlatform.Common.SettingsProvider
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 
     using CommonResources = Microsoft.VisualStudio.TestPlatform.Common.Resources.Resources;
-    using ObjectModelCommonResources = Microsoft.VisualStudio.TestPlatform.ObjectModel.Resources.CommonResources;
+    using ObjectModelCommonResources = Microsoft.VisualStudio.TestPlatform.ObjectModel.CommonResources;
 
     /// <summary>
     /// Manages the settings provider extensions.

@@ -90,7 +90,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
         /// Timeout that triggers sending results regardless of cache size.
         /// </param>
         public TestRunCriteria(IEnumerable<string> sources, long frequencyOfRunStatsChangeEvent, bool keepAlive, string testSettings, TimeSpan runStatsChangeEventTimeout)
-            : this(sources, frequencyOfRunStatsChangeEvent, keepAlive, testSettings, runStatsChangeEventTimeout, null)
+            : this(sources, frequencyOfRunStatsChangeEvent, keepAlive, testSettings, runStatsChangeEventTimeout, (ITestHostLauncher)null)
         {
         }
 
@@ -149,6 +149,24 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
 
             this.AdapterSourceMap = new Dictionary<string, IEnumerable<string>>();
             this.AdapterSourceMap.Add(Constants.UnspecifiedAdapterPath, testSources);
+        }
+
+        //tpv1
+        /// <summary>
+        /// Create the TestRunCriteria for a test run
+        /// </summary>
+        /// <param name="sources">Sources which contains tests that should be executed</param>        
+        /// <param name="frequencyOfRunStatsChangeEvent">Frequency of run stats event</param>
+        /// <param name="testSettings">Settings used for this run.</param>
+        /// <param name="keepAlive">Whether the execution process should be kept alive after the run is finished or not.</param>
+        /// <param name="runStatsChangeEventTimeout">Timeout that triggers sending results regardless of cache size.</param>
+        /// <param name="testExecutorLauncher">Custom test executor launcher. If null then default will be used.</param>
+        public TestRunCriteria(IEnumerable<string> sources, long frequencyOfRunStatsChangeEvent, bool keepAlive, string testSettings, TimeSpan runStatsChangeEventTimeout, ITestExecutorLauncher testExecutorLauncher)
+            : base(frequencyOfRunStatsChangeEvent, keepAlive, testSettings, runStatsChangeEventTimeout, testExecutorLauncher)
+        {
+            ValidateArg.NotNullOrEmpty(sources, "sources");
+
+           // this.Sources = sources;
         }
 
         /// <summary>
@@ -256,7 +274,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
         /// Timeout that triggers sending results regardless of cache size.
         /// </param>
         public TestRunCriteria(IEnumerable<TestCase> tests, long frequencyOfRunStatsChangeEvent, bool keepAlive, string testSettings, TimeSpan runStatsChangeEventTimeout)
-            : this(tests, frequencyOfRunStatsChangeEvent, keepAlive, testSettings, runStatsChangeEventTimeout, null)
+            : this(tests, frequencyOfRunStatsChangeEvent, keepAlive, testSettings, runStatsChangeEventTimeout, (ITestHostLauncher)null)
         {
         }
 
@@ -309,6 +327,25 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
         }
 
         /// <summary>
+        /// Create the TestRunCriteria for a test run
+        /// </summary>
+        /// <param name="sources">Sources which contains tests that should be executed</param>        
+        /// <param name="frequencyOfRunStatsChangeEvent">Frequency of run stats event</param>
+        /// <param name="keepAlive">Whether or not to keep the test executor process alive after run completion</param>
+        /// <param name="testSettings">Settings used for this run.</param>
+        /// <param name="runStatsChangeEventTimeout">Timeout that triggers sending results regardless of cache size.</param>
+        /// <param name="testExecutorLauncher">Custom test executor launcher. If null then default will be used.</param>
+        public TestRunCriteria(IEnumerable<TestCase> tests, long frequencyOfRunStatsChangeEvent, bool keepAlive, string testSettings, TimeSpan runStatsChangeEventTimeout, ITestExecutorLauncher testExecutorLauncher)
+            : base(frequencyOfRunStatsChangeEvent, keepAlive, testSettings, runStatsChangeEventTimeout, testExecutorLauncher)
+        {
+            ValidateArg.NotNullOrEmpty(tests, "tests");
+
+            this.Tests = tests;
+        }
+
+
+
+        /// <summary>
         /// Gets the test Containers (e.g. DLL/EXE/artifacts to scan).
         /// </summary>
         [IgnoreDataMember]
@@ -319,6 +356,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
                 IEnumerable<string> sources = new List<string>();
                 return this.AdapterSourceMap?.Values.Aggregate(sources, (current, enumerable) => current.Concat(enumerable));
             }
+         
         }
 
         /// <summary>
@@ -516,7 +554,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
         /// Timeout for a <c>TestRunChangedEvent</c>.
         /// </param>
         public BaseTestRunCriteria(long frequencyOfRunStatsChangeEvent, bool keepAlive, string testSettings, TimeSpan runStatsChangeEventTimeout)
-            : this(frequencyOfRunStatsChangeEvent, keepAlive, testSettings, runStatsChangeEventTimeout, null)
+            : this(frequencyOfRunStatsChangeEvent, keepAlive, testSettings, runStatsChangeEventTimeout, (ITestHostLauncher)null)
         {
         }
 
@@ -557,6 +595,21 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
             this.TestHostLauncher = testHostLauncher;
         }
 
+
+        //tpv1
+        public BaseTestRunCriteria(long frequencyOfRunStatsChangeEvent, bool keepAlive, string testSettings, TimeSpan runStatsChangeEventTimeout, ITestExecutorLauncher testExecutorLauncher)
+        {
+            if (frequencyOfRunStatsChangeEvent <= 0) throw new ArgumentOutOfRangeException("frequencyOfRunStatsChangeEvent", Resources.NotificationFrequencyIsNotPositive);
+            if (runStatsChangeEventTimeout <= TimeSpan.MinValue) throw new ArgumentOutOfRangeException("runStatsChangeEventTimeout", Resources.NotificationTimeoutIsZero);
+
+            this.FrequencyOfRunStatsChangeEvent = frequencyOfRunStatsChangeEvent;
+            this.KeepAlive = keepAlive;
+            this.TestRunSettings = testSettings;
+            this.RunStatsChangeEventTimeout = runStatsChangeEventTimeout;
+            this.TestExecutorLauncher = testExecutorLauncher;
+        }
+
+
         /// <summary>
         /// Gets a value indicating whether the test executor process should remain alive after run completion.
         /// </summary>
@@ -574,6 +627,11 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
         /// </summary>
         [DataMember]
         public ITestHostLauncher TestHostLauncher { get; private set; }
+
+        /// <summary>
+        /// Custom launcher for test executor.
+        /// </summary>
+        public ITestExecutorLauncher TestExecutorLauncher { get; private set; }
 
         /// <summary>
         /// Gets the frequency of run stats test event.

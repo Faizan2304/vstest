@@ -151,6 +151,31 @@ namespace Microsoft.VisualStudio.TestPlatform.Client
             return new TestRunRequest(requestData, testRunCriteria, executionManager);
         }
 
+        public IDiscoveryRequest CreateDiscoveryRequest(DiscoveryCriteria discoveryCriteria)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IDiscoveryRequest CreateDiscoveryRequest2(DiscoveryCriteria discoveryCriteria)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMultipleTestRunRequest CreateMultipleTestRunRequest(BaseTestRunCriteria baseTestRunCriteria)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Initialize(IEnumerable<string> pathToAdditionalExtensions, bool loadOnlyWellKnownExtensions, bool forceX86Discoverer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IAsyncResult StartPreparingForFirstTestRunRequest(string testRunSettings, ITestExecutorLauncher testExecutorLauncher)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// The dispose.
         /// </summary>
@@ -267,6 +292,11 @@ namespace Microsoft.VisualStudio.TestPlatform.Client
                 var defaultExtensionPaths = fileHelper.EnumerateFiles(extensionsFolder, SearchOption.TopDirectoryOnly, ".dll", ".exe");
                 TestPluginCache.Instance.DefaultExtensionPaths = defaultExtensionPaths;
             }
+        }
+
+        public ITestRunRequest CreateTestRunRequest(TestRunCriteria testRunCriteria)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -84,6 +84,15 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
         /// </summary>
         private string targetDevice;
 
+        /// <summary>
+        /// Collect source information
+        /// </summary>
+        public bool CollectSourceInformation
+        {
+            get;
+            set;
+        }
+
         #endregion
 
         #region Constructor
@@ -292,21 +301,30 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
             }
         }
 
-        /// <summary>
-        /// Gets or sets the target Framework this run is targeting. Possible values are Framework3.5|Framework4.0|Framework4.5
-        /// </summary>
-        public Framework TargetFrameworkVersion
-        {
-            get
-            {
-                return this.framework;
-            }
+        ///// <summary>
+        ///// Gets or sets the target Framework this run is targeting. Possible values are Framework3.5|Framework4.0|Framework4.5
+        ///// </summary>
+        //public Framework TargetFrameworkVersion
+        //{
+        //    get
+        //    {
+        //        return this.framework;
+        //    }
 
-            set
-            {
-                this.framework = value;
-                this.TargetFrameworkSet = true;
-            }
+        //    set
+        //    {
+        //        this.framework = value;
+        //        this.TargetFrameworkSet = true;
+        //    }
+        //}
+
+        /// <summary>
+        /// Target Framework this run is targeting. Possible values are Framework3.5|Framework4.0|Framework4.5
+        /// </summary>
+        public FrameworkVersion TargetFrameworkVersion
+        {
+            get;
+            set;
         }
 
         /// <summary>
@@ -754,7 +772,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
                                     Resources.Resources.InvalidSettingsIncorrectValue, Constants.RunConfigurationSettingsName, value, elementName));
                             }
 
-                            runConfiguration.TargetFrameworkVersion = frameworkType;
+                            //runConfiguration.TargetFrameworkVersion = frameworkType;
                             break;
 
                         case "TestAdaptersPaths":

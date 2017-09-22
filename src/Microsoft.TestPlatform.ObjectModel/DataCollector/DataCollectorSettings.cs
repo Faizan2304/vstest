@@ -68,6 +68,18 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
         }
 
         /// <summary>
+        /// If adapter configuration is same as default configuration.
+        /// TODO::dhruvk::For code coverage collector this might need rework.
+        /// </summary>
+        public bool IsDefaultConfig
+        {
+            get
+            {
+                return Configuration == null;
+            }
+        }
+
+        /// <summary>
         /// The to xml.
         /// </summary>
         /// <returns>

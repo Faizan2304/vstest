@@ -52,6 +52,68 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Utilities
         }
 
         /// <summary>
+        /// Removes the given settings node from run settings Xml
+        /// </summary>
+        /// <param name="settingsXml"></param>
+        /// <param name="settingsName"></param>
+        /// <returns></returns>
+        public static string RemoveSettingsNode(string settingsXml, string settingsName)
+        {
+            ValidateArg.NotNullOrEmpty(settingsXml, "settingsXml");
+            ValidateArg.NotNullOrEmpty(settingsName, "settingsName");
+
+            XmlDocument doc = new XmlDocument();
+            using (var xmlReader = XmlReader.Create(new StringReader(settingsXml), new XmlReaderSettings() { CloseInput = true }))
+            {
+                doc.Load(xmlReader);
+            }
+            XmlElement root = doc.DocumentElement;
+
+            if (null != root[settingsName])
+            {
+                root.RemoveChild(root[settingsName]);
+            }
+            return doc.OuterXml;
+        }
+
+        /// <summary>
+        /// Replaces (or adds) the given node in run settings Xml.
+        /// </summary>
+        /// <param name="settingsXml"></param>
+        /// <param name="settingsNode"></param>
+        /// <returns></returns>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2202")]
+        public static string ReplaceSettingsNode(string settingsXml, TestRunSettings settingsNode)
+        {
+            ValidateArg.NotNull(settingsNode, "settingsNode");
+            ValidateArg.NotNull(settingsXml, "settingsXml");
+
+            XmlElement newElement = settingsNode.ToXml();
+
+            XmlDocument doc = new XmlDocument();
+
+            using (var xmlReader = XmlReader.Create(new StringReader(settingsXml), new XmlReaderSettings() { CloseInput = true }))
+            {
+                doc.Load(xmlReader);
+            }
+
+            XmlElement root = doc.DocumentElement;
+
+
+            if (null == root[settingsNode.Name])
+            {
+                XmlNode newNode = doc.ImportNode(newElement, true);
+                root.AppendChild(newNode);
+            }
+            else
+            {
+                root[settingsNode.Name].InnerXml = newElement.InnerXml;
+            }
+            return doc.OuterXml;
+
+        }
+
+        /// <summary>
         /// Examines the given XPathNavigable representation of a runsettings file and determines if it has a configuration node
         /// for the data collector (used for Fakes and CodeCoverage)
         /// </summary>
@@ -84,6 +146,39 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Utilities
             }
 
             return false;
+        }
+#if NET451
+        /// <summary>
+        /// Returns a value that indicates if the Fakes data collector is already configured  in the settings.
+        /// </summary>
+        /// <param name="runSettings"></param>
+        /// <returns></returns>
+
+        public static bool ContainsFakesDataCollector(IXPathNavigable runSettings)
+        {
+            if (runSettings == null)
+                throw new ArgumentNullException("runSettings");
+
+            return XmlRunSettingsUtilities.ContainsDataCollector(runSettings, FakesMetadata.DataCollectorUri);
+        }
+#endif
+
+        /// <summary>
+        /// Adds the Fakes data collector settings in the run settings document.
+        /// </summary>
+        /// <param name="runSettings">A run settings document with a DataCollectors element available</param>
+        /// <param name="fakesSettings"></param>
+        public static DataCollectorSettings CreateFakesDataCollectorSettings()
+        {
+            // embed the fakes run settings
+            var settings = new DataCollectorSettings
+            {
+                AssemblyQualifiedName = FakesMetadata.DataCollectorAssemblyQualifiedName,
+                FriendlyName = FakesMetadata.FriendlyName,
+                IsEnabled = true,
+                Uri = new Uri(FakesMetadata.DataCollectorUri)
+            };
+            return settings;
         }
 
         /// <summary>
@@ -383,6 +478,22 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Utilities
                 runSettingsNavigator.AppendChildElement(string.Empty, "DataCollectors", string.Empty, string.Empty);
                 runSettingsNavigator.MoveToChild("DataCollectors", string.Empty);
             }
+        }
+
+        static class FakesMetadata
+        {
+            /// <summary>
+            /// Friendly name of the data collector
+            /// </summary>
+            public const string FriendlyName = "UnitTestIsolation";
+            /// <summary>
+            /// Gets the URI of the data collector
+            /// </summary>
+            public const string DataCollectorUri = "datacollector://microsoft/unittestisolation/1.0";
+            /// <summary>
+            /// Gets the assembly qualified name of the data collector type
+            /// </summary>
+            public const string DataCollectorAssemblyQualifiedName = "Microsoft.VisualStudio.TraceCollector.UnitTestIsolationDataCollector, Microsoft.VisualStudio.TraceCollector, Version=11.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
         }
     }
 }
