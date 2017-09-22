@@ -166,7 +166,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
         {
             ValidateArg.NotNullOrEmpty(sources, "sources");
 
-           // this.Sources = sources;
+           //this.Sources = sources;
         }
 
         /// <summary>
@@ -599,8 +599,15 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
         //tpv1
         public BaseTestRunCriteria(long frequencyOfRunStatsChangeEvent, bool keepAlive, string testSettings, TimeSpan runStatsChangeEventTimeout, ITestExecutorLauncher testExecutorLauncher)
         {
-            if (frequencyOfRunStatsChangeEvent <= 0) throw new ArgumentOutOfRangeException("frequencyOfRunStatsChangeEvent", Resources.NotificationFrequencyIsNotPositive);
-            if (runStatsChangeEventTimeout <= TimeSpan.MinValue) throw new ArgumentOutOfRangeException("runStatsChangeEventTimeout", Resources.NotificationTimeoutIsZero);
+            if (frequencyOfRunStatsChangeEvent <= 0)
+            {
+                throw new ArgumentOutOfRangeException("frequencyOfRunStatsChangeEvent", Resources.NotificationFrequencyIsNotPositive);
+            }
+
+            if (runStatsChangeEventTimeout <= TimeSpan.MinValue)
+            {
+                throw new ArgumentOutOfRangeException("runStatsChangeEventTimeout", Resources.NotificationTimeoutIsZero);
+            }
 
             this.FrequencyOfRunStatsChangeEvent = frequencyOfRunStatsChangeEvent;
             this.KeepAlive = keepAlive;

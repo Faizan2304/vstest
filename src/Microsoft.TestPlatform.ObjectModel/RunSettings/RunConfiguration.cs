@@ -32,7 +32,12 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
         /// <summary>
         /// .Net framework which rocksteady should use for discovery/execution
         /// </summary>
-        private Framework framework;
+        private Framework frameworkTpV2;
+
+        /// <summary>
+        /// .Net framework which rocksteady should use for discovery/execution
+        /// </summary>
+        private FrameworkVersion framework;
 
         /// <summary>
         /// Specifies the frequency of the runStats/discoveredTests event
@@ -104,7 +109,8 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
         {
             // Set defaults for target platform, framework version type and results directory.
             this.platform = Constants.DefaultPlatform;
-            this.framework = Framework.DefaultFramework;
+            this.frameworkTpV2 = Framework.DefaultFramework;
+            this.framework = Constants.DefaultFramework;
             this.resultsDirectory = Constants.DefaultResultsDirectory;
             this.SolutionDirectory = null;
             this.TreatTestAdapterErrorsAsWarnings = Constants.DefaultTreatTestAdapterErrorsAsWarnings;
@@ -120,6 +126,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
             this.shouldCollectSourceInformation = false;
             this.targetDevice = null;
             this.ExecutionThreadApartmentState = Constants.DefaultExecutionThreadApartmentState;
+            this.CollectSourceInformation = true;
         }
 
         #endregion
@@ -308,13 +315,13 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
         {
             get
             {
-                return this.framework;
+                return this.frameworkTpV2;
             }
 
             set
             {
-                this.framework = value;
-                this.TargetFrameworkSet = true;
+                this.frameworkTpV2 = value;
+                this.TargetFrameworkTpV2Set = true;
             }
         }
 
@@ -323,8 +330,16 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
         /// </summary>
         public FrameworkVersion TargetFrameworkVersion
         {
-            get;
-            set;
+            get
+            {
+                return framework;
+            }
+
+            set
+            {
+                framework = value;
+                TargetFrameworkSet = true;
+            }
         }
 
         /// <summary>
@@ -441,6 +456,15 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
         /// Gets a value indicating whether parallelism needs to be disabled by the adapters.
         /// </summary>
         public bool DisableParallelizationSet
+        {
+            get;
+            private set;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether target framework set.
+        /// </summary>
+        public bool TargetFrameworkTpV2Set
         {
             get;
             private set;
@@ -749,13 +773,13 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
 
                         case "TargetFrameworkVersion":
                             XmlRunSettingsUtilities.ThrowOnHasAttributes(reader);
-                            Framework frameworkType;
+                            Framework frameworkTypeTpv2;
                             value = reader.ReadElementContentAsString();
                             try
                             {
-                                frameworkType = Framework.FromString(value);
+                                frameworkTypeTpv2 = Framework.FromString(value);
 
-                                if (frameworkType == null)
+                                if (frameworkTypeTpv2 == null)
                                 {
                                     throw new SettingsException(
                                         string.Format(
@@ -772,7 +796,29 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel
                                     Resources.Resources.InvalidSettingsIncorrectValue, Constants.RunConfigurationSettingsName, value, elementName));
                             }
 
-                            runConfiguration.TargetFrameworkVersionTpV2 = frameworkType;
+                            runConfiguration.TargetFrameworkVersionTpV2 = frameworkTypeTpv2;
+
+                            XmlRunSettingsUtilities.ThrowOnHasAttributes(reader);
+                            FrameworkVersion frameworkType1;
+                            value = reader.ReadElementContentAsString();
+                            try
+                            {
+                                frameworkType1 = (FrameworkVersion)Enum.Parse(typeof(FrameworkVersion), value, true);
+                                if (frameworkType1 != FrameworkVersion.Framework35 && frameworkType1 != FrameworkVersion.Framework40 &&
+                                    frameworkType1 != FrameworkVersion.Framework45 && frameworkType1 != FrameworkVersion.FrameworkCore10)
+                                {
+                                    throw new SettingsException(String.Format(CultureInfo.CurrentCulture,
+                                        Resources.Resources.InvalidSettingsIncorrectValue, Constants.RunConfigurationSettingsName, value, elementName));
+                                }
+
+                            }
+                            catch (ArgumentException)
+                            {
+                                throw new SettingsException(String.Format(CultureInfo.CurrentCulture,
+                                    Resources.Resources.InvalidSettingsIncorrectValue, Constants.RunConfigurationSettingsName, value, elementName));
+                            }
+                            runConfiguration.TargetFrameworkVersion = frameworkType1;
+
                             break;
 
                         case "TestAdaptersPaths":
