@@ -46,7 +46,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
         /// <returns>True if test executor needs to be relaunched.</returns>
         bool RestartRequired(FrameworkVersion frameworkVersion, Architecture architecture, IDictionary<string, string> environmentVariables);
 
-#if NET451
+#if NET45
         /// <summary>
         /// Customize the binding based on the launch if required (e.g. in AppContainer mode).
         /// Else just return the baseBinding.
@@ -72,7 +72,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Client
     public interface ITestExecutorLauncher2 : ITestExecutorLauncher
     {
 		
-#if NET451
+#if NET45
         /// <summary>
         /// This is used by the platform to get the endpoint adress which will further be used to customize proxy.
         /// </summary>

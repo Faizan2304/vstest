@@ -47,6 +47,11 @@
         </alt-trans>
         <note from="bb-metadata">fuzzyMatch="15" wordcount="33" adjWordcount="28.05" curWordcount="28.05"</note>
       </trans-unit>
+      <trans-unit id="FileNotFound">
+        <source>Could not find file {0}.</source>
+        <target state="new">Could not find file {0}.</target>
+        <note></note>
+      </trans-unit>
     </body>
   </file>
 </xliff>

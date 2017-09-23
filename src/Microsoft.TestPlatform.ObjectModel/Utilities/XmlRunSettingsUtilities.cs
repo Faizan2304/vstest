@@ -147,7 +147,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Utilities
 
             return false;
         }
-#if NET451
+#if NET45
         /// <summary>
         /// Returns a value that indicates if the Fakes data collector is already configured  in the settings.
         /// </summary>
@@ -274,7 +274,7 @@ namespace Microsoft.VisualStudio.TestPlatform.ObjectModel.Utilities
             var dataCollectorsNode = doc.CreateElement(Constants.DataCollectorsSettingName);
             dataCollectionRunSettingsNode.AppendChild(dataCollectorsNode);
 
-#if NET451
+#if NET45
             return doc;
 #else
             return doc.ToXPathNavigable();
