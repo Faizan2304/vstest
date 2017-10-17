@@ -84,6 +84,10 @@ namespace Microsoft.VisualStudio.TestPlatform.CommunicationUtilities
             do
             {
                 var message = this.communicationManager.ReceiveMessage();
+                if (EqtTrace.IsInfoEnabled)
+                {
+                    EqtTrace.Info("TestRequestHandler.ProcessRequests: received message: {0}", message);
+                }
 
                 switch (message.MessageType)
                 {
@@ -151,6 +155,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CommunicationUtilities
                                 testHostManagerFactory.GetExecutionManager()
                                     .StartTestRun(
                                         testRunCriteriaWithSources.AdapterSourceMap,
+                                        testRunCriteriaWithSources.Package,
                                         testRunCriteriaWithSources.RunSettings,
                                         testRunCriteriaWithSources.TestExecutionContext,
                                         this.GetTestCaseEventsHandler(testRunCriteriaWithSources.RunSettings),
@@ -173,8 +178,9 @@ namespace Microsoft.VisualStudio.TestPlatform.CommunicationUtilities
                                 testHostManagerFactory.GetExecutionManager()
                                     .StartTestRun(
                                         testRunCriteriaWithTests.Tests,
+                                        testRunCriteriaWithTests.Package,
                                         testRunCriteriaWithTests.RunSettings,
-                                        testRunCriteriaWithTests.TestExecutionContext, 
+                                        testRunCriteriaWithTests.TestExecutionContext,
                                         this.GetTestCaseEventsHandler(testRunCriteriaWithTests.RunSettings),
                                         testRunEventsHandler),
                                 0);
@@ -271,13 +277,14 @@ namespace Microsoft.VisualStudio.TestPlatform.CommunicationUtilities
         }
 
         /// <inheritdoc/>
-        public void DiscoveryComplete(long totalTests, IEnumerable<TestCase> lastChunk, bool isAborted)
+        public void DiscoveryComplete(DiscoveryCompleteEventArgs discoveryCompleteEventArgs, IEnumerable<TestCase> lastChunk)
         {
             var discoveryCompletePayload = new DiscoveryCompletePayload
             {
-                TotalTests = totalTests,
-                LastDiscoveredTests = isAborted ? null : lastChunk,
-                IsAborted = isAborted
+                TotalTests = discoveryCompleteEventArgs.TotalCount,
+                LastDiscoveredTests = discoveryCompleteEventArgs.IsAborted ? null : lastChunk,
+                IsAborted = discoveryCompleteEventArgs.IsAborted,
+                Metrics = discoveryCompleteEventArgs.Metrics
             };
 
             this.communicationManager.SendMessage(MessageType.DiscoveryComplete, discoveryCompletePayload, this.protocolVersion);

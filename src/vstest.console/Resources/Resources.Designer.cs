@@ -476,6 +476,18 @@ namespace Microsoft.VisualStudio.TestPlatform.CommandLine.Resources
         }
 
         /// <summary>
+        ///   --DisableAutoFakes|/DisableAutoFakes:<true/false>
+        ///      Example: /DisableAutoFakes:true
+        /// </summary>
+        public static string DisableAutoFakesUsage
+        {
+            get
+            {
+                return ResourceManager.GetString("DisableAutoFakesUsage", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to --Blame|/Blame 
         ///      Enable Blame mode for diagnosis of faulty test case
         /// </summary>
@@ -962,17 +974,6 @@ namespace Microsoft.VisualStudio.TestPlatform.CommandLine.Resources
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Settings file provided do not confirm to required format. .
-        /// </summary>
-        public static string MalformedRunSettingsFile
-        {
-            get
-            {
-                return ResourceManager.GetString("MalformedRunSettingsFile", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to One or more runsettings provided contain invalid token.
         /// </summary>
         public static string MalformedRunSettingsKey
@@ -1096,11 +1097,11 @@ namespace Microsoft.VisualStudio.TestPlatform.CommandLine.Resources
         /// <summary>
         ///   Looks up a localized string similar to {0} {1}.
         /// </summary>
-        public static string NoTestsFoundWarningMessageWithSuggestionToUseVsix
+        public static string StringFormatToJoinTwoStrings
         {
             get
             {
-                return ResourceManager.GetString("NoTestsFoundWarningMessageWithSuggestionToUseVsix", resourceCulture);
+                return ResourceManager.GetString("StringFormatToJoinTwoStrings", resourceCulture);
             }
         }
 
@@ -1500,57 +1501,13 @@ namespace Microsoft.VisualStudio.TestPlatform.CommandLine.Resources
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Additionally, you can try specifying &apos;/UseVsixExtensions&apos; command if the test discoverer &amp; executor is installed on the machine as vsix extensions and your installation supports vsix extensions. Example: vstest.console.exe myTests.dll /UseVsixExtensions:true.
+        ///   Looks up a localized string similar to Additionally, path to test adapters can be specified using /TestAdapterPath command. Example  /TestAdapterPath:&lt;pathToCustomAdapters&gt;..
         /// </summary>
-        public static string SuggestUseVsixExtensionsIfNoTestsIsFound
+        public static string SuggestTestAdapterPathIfNoTestsIsFound
         {
             get
             {
-                return ResourceManager.GetString("SuggestUseVsixExtensionsIfNoTestsIsFound", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to The Test Discovery Add-Ins installed through a VSIX installation are ignored. Use the /UseVsixExtensions parameter to include them, if your installation supports vsix extensions. Example: vstest.console.exe {0} /UseVsixExtensions:true.
-        /// </summary>
-        public static string SuggestUseVsixExtensionsInListDiscoverersCommand
-        {
-            get
-            {
-                return ResourceManager.GetString("SuggestUseVsixExtensionsInListDiscoverersCommand", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to The Test Executor Add-Ins installed through a VSIX installation are ignored. Use the /UseVsixExtensions parameter to include them, if your installation supports vsix extensions. Example: vstest.console.exe {0} /UseVsixExtensions:true.
-        /// </summary>
-        public static string SuggestUseVsixExtensionsInListExecutorsCommand
-        {
-            get
-            {
-                return ResourceManager.GetString("SuggestUseVsixExtensionsInListExecutorsCommand", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to The Test Logger Add-Ins installed through a VSIX installation are ignored. Use the /UseVsixExtensions parameter to include them, if your installation supports vsix extensions. Example: vstest.console.exe {0} /UseVsixExtensions:true.
-        /// </summary>
-        public static string SuggestUseVsixExtensionsInListLoggersCommand
-        {
-            get
-            {
-                return ResourceManager.GetString("SuggestUseVsixExtensionsInListLoggersCommand", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to The Settings Providers Add-Ins installed through a VSIX installation are ignored. Use the /UseVsixExtensions parameter to include them, if your installation supports vsix extensions. Example: vstest.console.exe {0} /UseVsixExtensions:true.
-        /// </summary>
-        public static string SuggestUseVsixExtensionsInListSettingsProviderCommand
-        {
-            get
-            {
-                return ResourceManager.GetString("SuggestUseVsixExtensionsInListSettingsProviderCommand", resourceCulture);
+                return ResourceManager.GetString("SuggestTestAdapterPathIfNoTestsIsFound", resourceCulture);
             }
         }
 
@@ -1711,6 +1668,28 @@ namespace Microsoft.VisualStudio.TestPlatform.CommandLine.Resources
         }
 
         /// <summary>
+        ///   Data collectors configured via run settings are not supported with embedded test settings. Please see https://aka.ms/vstest-configure-datacollector for more information. Run settings: {0}..
+        /// </summary>
+        public static string RunsettingsWithDCErrorMessage
+        {
+            get
+            {
+                return ResourceManager.GetString("RunsettingsWithDCErrorMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   --Collect|/Collect:&quot;{0}&quot; is not supported if test run is configured using testsettings..
+        /// </summary>
+        public static string CollectWithTestSettingErrorMessage
+        {
+            get
+            {
+                return ResourceManager.GetString("CollectWithTestSettingErrorMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Test Run Failed..
         /// </summary>
         public static string TestRunFailed
@@ -1766,6 +1745,17 @@ namespace Microsoft.VisualStudio.TestPlatform.CommandLine.Resources
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Total tests: Unknown. Passed: {0}. Failed: {1}. Skipped: {2}..
+        /// </summary>
+        public static string TestRunSummaryForCanceledOrAbortedRun
+        {
+            get
+            {
+                return ResourceManager.GetString("TestRunSummaryForCanceledOrAbortedRun", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Using framework {0} to run the tests. Specify /Framework:{1} to suppress this warning..
         /// </summary>
         public static string TestSettingsFrameworkMismatch
@@ -1806,6 +1796,17 @@ namespace Microsoft.VisualStudio.TestPlatform.CommandLine.Resources
             get
             {
                 return ResourceManager.GetString("UriOfDefaultExecutor", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to /UseVsixExtensions is getting deprecated. Please use /TestAdapterPath instead..
+        /// </summary>
+        public static string UseVsixExtensionsDeprecation
+        {
+            get
+            {
+                return ResourceManager.GetString("UseVsixExtensionsDeprecation", resourceCulture);
             }
         }
 

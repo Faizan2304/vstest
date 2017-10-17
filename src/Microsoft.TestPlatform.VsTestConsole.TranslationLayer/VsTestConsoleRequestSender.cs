@@ -11,7 +11,6 @@ namespace Microsoft.TestPlatform.VsTestConsole.TranslationLayer
     using System.Threading.Tasks;
 
     using Microsoft.TestPlatform.VsTestConsole.TranslationLayer.Interfaces;
-    using Microsoft.TestPlatform.VsTestConsole.TranslationLayer.Payloads;
     using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities;
     using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Interfaces;
     using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.ObjectModel;
@@ -105,9 +104,7 @@ namespace Microsoft.TestPlatform.VsTestConsole.TranslationLayer
             return waitSucess && this.handShakeSuccessful;
         }
 
-        /// <summary>
-        /// Asynchronous equivalent to <see cref="InitializeCommunication"/> and <see cref="WaitForRequestHandlerConnection(int)"/>.
-        /// </summary>
+        /// <inheritdoc/>
         public async Task<int> InitializeCommunicationAsync(int clientConnectionTimeout)
         {
             this.processExitCancellationTokenSource = new CancellationTokenSource();
@@ -132,98 +129,71 @@ namespace Microsoft.TestPlatform.VsTestConsole.TranslationLayer
             return this.handShakeSuccessful ? port : -1;
         }
 
-        /// <summary>
-        /// Initializes the Extensions while probing additional extension paths 
-        /// </summary>
-        /// <param name="pathToAdditionalExtensions">Paths to check for additional extensions</param>
+        /// <inheritdoc/>
         public void InitializeExtensions(IEnumerable<string> pathToAdditionalExtensions)
         {
             this.communicationManager.SendMessage(MessageType.ExtensionsInitialize, pathToAdditionalExtensions, this.protocolVersion);
         }
 
-        /// <summary>
-        /// Discover Tests using criteria and send events through eventHandler
-        /// </summary>
-        /// <param name="sources"></param>
-        /// <param name="runSettings"></param>
-        /// <param name="eventHandler"></param>
-        public void DiscoverTests(IEnumerable<string> sources, string runSettings, ITestDiscoveryEventsHandler eventHandler)
+        /// <inheritdoc/>
+        public void DiscoverTests(IEnumerable<string> sources, string runSettings, TestPlatformOptions options, ITestDiscoveryEventsHandler2 eventHandler)
         {
-            this.SendMessageAndListenAndReportTestCases(sources, runSettings, eventHandler);
+            this.SendMessageAndListenAndReportTestCases(sources, runSettings, options, eventHandler);
         }
 
         /// <summary>
-        /// Asynchronous equivalent of <see cref="DiscoverTests(IEnumerable{string}, string, ITestDiscoveryEventsHandler)"/>.
+        /// Asynchronous equivalent of <see cref="DiscoverTests"/>.
         /// </summary>
-        public async Task DiscoverTestsAsync(IEnumerable<string> sources, string runSettings, ITestDiscoveryEventsHandler eventHandler)
+        public async Task DiscoverTestsAsync(IEnumerable<string> sources, string runSettings, TestPlatformOptions options, ITestDiscoveryEventsHandler2 eventHandler)
         {
-            await this.SendMessageAndListenAndReportTestCasesAsync(sources, runSettings, eventHandler);
+            await this.SendMessageAndListenAndReportTestCasesAsync(sources, runSettings, options, eventHandler);
         }
 
-        /// <summary>
-        /// Starts the TestRun with given sources and criteria
-        /// </summary>
-        /// <param name="sources">Sources for test run</param>
-        /// <param name="runSettings">RunSettings for test run</param>
-        /// <param name="runEventsHandler">EventHandler for test run events</param>
-        public void StartTestRun(IEnumerable<string> sources, string runSettings, ITestRunEventsHandler runEventsHandler)
+        /// <inheritdoc/>
+        public void StartTestRun(IEnumerable<string> sources, string runSettings, TestPlatformOptions options, ITestRunEventsHandler runEventsHandler)
         {
             this.SendMessageAndListenAndReportTestResults(
                 MessageType.TestRunAllSourcesWithDefaultHost,
-                new TestRunRequestPayload() { Sources = sources.ToList(), RunSettings = runSettings },
+                new TestRunRequestPayload() { Sources = sources.ToList(), RunSettings = runSettings, TestPlatformOptions = options },
                 runEventsHandler,
                 null);
         }
 
-        /// <summary>
-        /// Asynchronous equivalent of <see cref="StartTestRun(IEnumerable{string}, string, ITestRunEventsHandler)"/>.
-        /// </summary>
-        public async Task StartTestRunAsync(IEnumerable<string> sources, string runSettings, ITestRunEventsHandler runEventsHandler)
+        /// <inheritdoc/>
+        public async Task StartTestRunAsync(IEnumerable<string> sources, string runSettings, TestPlatformOptions options, ITestRunEventsHandler runEventsHandler)
         {
             await this.SendMessageAndListenAndReportTestResultsAsync(
                 MessageType.TestRunAllSourcesWithDefaultHost,
-                new TestRunRequestPayload() { Sources = sources.ToList(), RunSettings = runSettings },
+                new TestRunRequestPayload() { Sources = sources.ToList(), RunSettings = runSettings, TestPlatformOptions = options },
                 runEventsHandler,
                 null);
         }
 
-        /// <summary>
-        /// Starts the TestRun with given test cases and criteria
-        /// </summary>
-        /// <param name="testCases">TestCases to run</param>
-        /// <param name="runSettings">RunSettings for test run</param>
-        /// <param name="runEventsHandler">EventHandler for test run events</param>
-        public void StartTestRun(IEnumerable<TestCase> testCases, string runSettings, ITestRunEventsHandler runEventsHandler)
+        /// <inheritdoc/>
+        public void StartTestRun(IEnumerable<TestCase> testCases, string runSettings, TestPlatformOptions options, ITestRunEventsHandler runEventsHandler)
         {
             this.SendMessageAndListenAndReportTestResults(
                 MessageType.TestRunAllSourcesWithDefaultHost,
-                new TestRunRequestPayload() { TestCases = testCases.ToList(), RunSettings = runSettings },
+                new TestRunRequestPayload() { TestCases = testCases.ToList(), RunSettings = runSettings, TestPlatformOptions = options },
                 runEventsHandler,
                 null);
         }
 
-        /// <summary>
-        /// Asynchronous equivalent of <see cref="StartTestRun(IEnumerable{TestCase}, string, ITestRunEventsHandler)"/>.
-        /// </summary>
-        public async Task StartTestRunAsync(IEnumerable<TestCase> testCases, string runSettings, ITestRunEventsHandler runEventsHandler)
+        /// <inheritdoc/>
+        public async Task StartTestRunAsync(IEnumerable<TestCase> testCases, string runSettings, TestPlatformOptions options, ITestRunEventsHandler runEventsHandler)
         {
             await this.SendMessageAndListenAndReportTestResultsAsync(
                 MessageType.TestRunAllSourcesWithDefaultHost,
-                new TestRunRequestPayload() { TestCases = testCases.ToList(), RunSettings = runSettings },
+                new TestRunRequestPayload() { TestCases = testCases.ToList(), RunSettings = runSettings, TestPlatformOptions = options },
                 runEventsHandler,
                 null);
         }
 
-        /// <summary>
-        /// Starts the TestRun with given sources and criteria with custom test host
-        /// </summary>
-        /// <param name="sources">Sources for test run</param>
-        /// <param name="runSettings">RunSettings for test run</param>
-        /// <param name="runEventsHandler">EventHandler for test run events</param>
-        /// <param name="customHostLauncher">TestHostLauncher that launches the test host for the run</param>
+        /// <inheritdoc/>
         public void StartTestRunWithCustomHost(
             IEnumerable<string> sources,
             string runSettings,
+            TestPlatformOptions options,
             ITestRunEventsHandler runEventsHandler,
             ITestHostLauncher customHostLauncher)
         {
@@ -233,18 +203,18 @@ namespace Microsoft.TestPlatform.VsTestConsole.TranslationLayer
                 {
                     Sources = sources.ToList(),
                     RunSettings = runSettings,
-                    DebuggingEnabled = customHostLauncher.IsDebug
+                    DebuggingEnabled = customHostLauncher.IsDebug,
+                    TestPlatformOptions = options
                 },
                 runEventsHandler,
                 customHostLauncher);
         }
 
-        /// <summary>
-        /// Asynchronous equivalent of <see cref="StartTestRunWithCustomHost(IEnumerable{string}, string, ITestRunEventsHandler, ITestHostLauncher)"/>.
-        /// </summary>
+        /// <inheritdoc/>
         public async Task StartTestRunWithCustomHostAsync(
             IEnumerable<string> sources,
             string runSettings,
+            TestPlatformOptions options,
             ITestRunEventsHandler runEventsHandler,
             ITestHostLauncher customHostLauncher)
         {
@@ -254,24 +224,15 @@ namespace Microsoft.TestPlatform.VsTestConsole.TranslationLayer
                 {
                     Sources = sources.ToList(),
                     RunSettings = runSettings,
-                    DebuggingEnabled = customHostLauncher.IsDebug
+                    DebuggingEnabled = customHostLauncher.IsDebug,
+                    TestPlatformOptions = options
                 },
                 runEventsHandler,
                 customHostLauncher);
         }
 
-        /// <summary>
-        /// Starts the TestRun with given test cases and criteria with custom test host
-        /// </summary>
-        /// <param name="testCases">TestCases to run</param>
-        /// <param name="runSettings">RunSettings for test run</param>
-        /// <param name="runEventsHandler">EventHandler for test run events</param>
-        /// <param name="customHostLauncher">TestHostLauncher that launches the test host for the run</param>
-        public void StartTestRunWithCustomHost(
-            IEnumerable<TestCase> testCases,
-            string runSettings,
-            ITestRunEventsHandler runEventsHandler,
-            ITestHostLauncher customHostLauncher)
+        /// <inheritdoc/>
+        public void StartTestRunWithCustomHost(IEnumerable<TestCase> testCases, string runSettings, TestPlatformOptions options, ITestRunEventsHandler runEventsHandler, ITestHostLauncher customHostLauncher)
         {
             this.SendMessageAndListenAndReportTestResults(
                 MessageType.GetTestRunnerProcessStartInfoForRunSelected,
@@ -279,20 +240,15 @@ namespace Microsoft.TestPlatform.VsTestConsole.TranslationLayer
                 {
                     TestCases = testCases.ToList(),
                     RunSettings = runSettings,
-                    DebuggingEnabled = customHostLauncher.IsDebug
+                    DebuggingEnabled = customHostLauncher.IsDebug,
+                    TestPlatformOptions = options
                 },
                 runEventsHandler,
                 customHostLauncher);
         }
 
-        /// <summary>
-        /// Asynchronous equivalent of <see cref="StartTestRunWithCustomHost(IEnumerable{TestCase}, string, ITestRunEventsHandler, ITestHostLauncher)"/>.
-        /// </summary>
-        public async Task StartTestRunWithCustomHostAsync(
-            IEnumerable<TestCase> testCases,
-            string runSettings,
-            ITestRunEventsHandler runEventsHandler,
-            ITestHostLauncher customHostLauncher)
+        /// <inheritdoc/>
+        public async Task StartTestRunWithCustomHostAsync(IEnumerable<TestCase> testCases, string runSettings, TestPlatformOptions options, ITestRunEventsHandler runEventsHandler, ITestHostLauncher customHostLauncher)
         {
             await this.SendMessageAndListenAndReportTestResultsAsync(
                 MessageType.GetTestRunnerProcessStartInfoForRunSelected,
@@ -300,23 +256,20 @@ namespace Microsoft.TestPlatform.VsTestConsole.TranslationLayer
                 {
                     TestCases = testCases.ToList(),
                     RunSettings = runSettings,
-                    DebuggingEnabled = customHostLauncher.IsDebug
+                    DebuggingEnabled = customHostLauncher.IsDebug,
+                    TestPlatformOptions = options
                 },
                 runEventsHandler,
                 customHostLauncher);
         }
 
-        /// <summary>
-        /// Send Cancel TestRun message
-        /// </summary>
+        /// <inheritdoc/>
         public void CancelTestRun()
         {
             this.communicationManager.SendMessage(MessageType.CancelTestRun);
         }
 
-        /// <summary>
-        /// Send Abort TestRun message
-        /// </summary>
+        /// <inheritdoc/>
         public void AbortTestRun()
         {
             this.communicationManager.SendMessage(MessageType.AbortTestRun);
@@ -416,13 +369,13 @@ namespace Microsoft.TestPlatform.VsTestConsole.TranslationLayer
             return success;
         }
 
-        private void SendMessageAndListenAndReportTestCases(IEnumerable<string> sources, string runSettings, ITestDiscoveryEventsHandler eventHandler)
+        private void SendMessageAndListenAndReportTestCases(IEnumerable<string> sources, string runSettings, TestPlatformOptions options, ITestDiscoveryEventsHandler2 eventHandler)
         {
             try
             {
                 this.communicationManager.SendMessage(
                             MessageType.StartDiscovery,
-                            new DiscoveryRequestPayload() { Sources = sources, RunSettings = runSettings },
+                            new DiscoveryRequestPayload() { Sources = sources, RunSettings = runSettings, TestPlatformOptions = options },
                             this.protocolVersion);
                 var isDiscoveryComplete = false;
 
@@ -444,10 +397,14 @@ namespace Microsoft.TestPlatform.VsTestConsole.TranslationLayer
                         var discoveryCompletePayload =
                             this.dataSerializer.DeserializePayload<DiscoveryCompletePayload>(message);
 
+                        var discoveryCompleteEventArgs = new DiscoveryCompleteEventArgs(discoveryCompletePayload.TotalTests, discoveryCompletePayload.IsAborted);
+
+                        // Adding Metrics From VsTestConsole
+                        discoveryCompleteEventArgs.Metrics = discoveryCompletePayload.Metrics;
+
                         eventHandler.HandleDiscoveryComplete(
-                            discoveryCompletePayload.TotalTests,
-                            discoveryCompletePayload.LastDiscoveredTests,
-                            discoveryCompletePayload.IsAborted);
+                            discoveryCompleteEventArgs,
+                            discoveryCompletePayload.LastDiscoveredTests);
                         isDiscoveryComplete = true;
                     }
                     else if (string.Equals(MessageType.TestMessage, message.MessageType))
@@ -462,7 +419,9 @@ namespace Microsoft.TestPlatform.VsTestConsole.TranslationLayer
                 EqtTrace.Error("Aborting Test Discovery Operation: {0}", exception);
 
                 eventHandler.HandleLogMessage(TestMessageLevel.Error, TranslationLayerResources.AbortedTestsDiscovery);
-                eventHandler.HandleDiscoveryComplete(-1, null, true);
+
+                var discoveryCompleteEventArgs = new DiscoveryCompleteEventArgs(-1, true);
+                eventHandler.HandleDiscoveryComplete(discoveryCompleteEventArgs, null);
 
                 CleanupCommunicationIfProcessExit();
             }
@@ -470,13 +429,13 @@ namespace Microsoft.TestPlatform.VsTestConsole.TranslationLayer
             this.testPlatformEventSource.TranslationLayerDiscoveryStop();
         }
 
-        private async Task SendMessageAndListenAndReportTestCasesAsync(IEnumerable<string> sources, string runSettings, ITestDiscoveryEventsHandler eventHandler)
+        private async Task SendMessageAndListenAndReportTestCasesAsync(IEnumerable<string> sources, string runSettings, TestPlatformOptions options, ITestDiscoveryEventsHandler2 eventHandler)
         {
             try
             {
                 this.communicationManager.SendMessage(
                             MessageType.StartDiscovery,
-                            new DiscoveryRequestPayload() { Sources = sources, RunSettings = runSettings },
+                            new DiscoveryRequestPayload() { Sources = sources, RunSettings = runSettings, TestPlatformOptions = options },
                             this.protocolVersion);
                 var isDiscoveryComplete = false;
 
@@ -498,10 +457,14 @@ namespace Microsoft.TestPlatform.VsTestConsole.TranslationLayer
                         var discoveryCompletePayload =
                             this.dataSerializer.DeserializePayload<DiscoveryCompletePayload>(message);
 
+                        var discoveryCompleteEventArgs = new DiscoveryCompleteEventArgs(discoveryCompletePayload.TotalTests, discoveryCompletePayload.IsAborted);
+
+                        // Adding Metrics from VsTestConsole
+                        discoveryCompleteEventArgs.Metrics = discoveryCompletePayload.Metrics;
+
                         eventHandler.HandleDiscoveryComplete(
-                            discoveryCompletePayload.TotalTests,
-                            discoveryCompletePayload.LastDiscoveredTests,
-                            discoveryCompletePayload.IsAborted);
+                            discoveryCompleteEventArgs,
+                            discoveryCompletePayload.LastDiscoveredTests);
                         isDiscoveryComplete = true;
                     }
                     else if (string.Equals(MessageType.TestMessage, message.MessageType))
@@ -516,7 +479,9 @@ namespace Microsoft.TestPlatform.VsTestConsole.TranslationLayer
                 EqtTrace.Error("Aborting Test Discovery Operation: {0}", exception);
 
                 eventHandler.HandleLogMessage(TestMessageLevel.Error, TranslationLayerResources.AbortedTestsDiscovery);
-                eventHandler.HandleDiscoveryComplete(-1, null, true);
+
+                var discoveryCompleteEventArgs = new DiscoveryCompleteEventArgs(-1, true);
+                eventHandler.HandleDiscoveryComplete(discoveryCompleteEventArgs, null);
 
                 CleanupCommunicationIfProcessExit();
             }

@@ -7,13 +7,19 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.DataCollection
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.IO;
+    using System.Linq;
+    using System.Reflection;
+    using System.Xml;
 
+    using Microsoft.VisualStudio.TestPlatform.Common.Telemetry;
+    using Microsoft.VisualStudio.TestPlatform.Common.Utilities;
     using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.DataCollection;
     using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.DataCollection.Interfaces;
     using Microsoft.VisualStudio.TestPlatform.CoreUtilities.Extensions;
     using Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.DataCollection.Interfaces;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
+    using Microsoft.VisualStudio.TestPlatform.ObjectModel.Utilities;
     using Microsoft.VisualStudio.TestPlatform.PlatformAbstractions;
     using Microsoft.VisualStudio.TestPlatform.PlatformAbstractions.Interfaces;
     using Microsoft.VisualStudio.TestPlatform.Utilities;
@@ -34,34 +40,44 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.DataCollection
         private IProcessHelper processHelper;
         private string settingsXml;
         private int connectionTimeout;
+        private IRequestData requestData;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProxyDataCollectionManager"/> class.
         /// </summary>
-        /// <param name="settingsXml">
-        /// Runsettings that contains the datacollector related configuration.
+        /// <param name="requestData">
+        /// Request Data providing common execution/discovery services.
         /// </param>
-        public ProxyDataCollectionManager(string settingsXml)
-            : this(settingsXml, new ProcessHelper())
+        /// <param name="settingsXml">
+        ///     Runsettings that contains the datacollector related configuration.
+        /// </param>
+        public ProxyDataCollectionManager(IRequestData requestData, string settingsXml)
+            : this(requestData, settingsXml, new ProcessHelper())
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProxyDataCollectionManager"/> class.
         /// </summary>
+        /// <param name="requestData">
+        /// Request Data providing common execution/discovery services.
+        /// </param>
         /// <param name="settingsXml">
         /// The settings xml.
         /// </param>
         /// <param name="processHelper">
         /// The process helper.
         /// </param>
-        internal ProxyDataCollectionManager(string settingsXml, IProcessHelper processHelper) : this(settingsXml, new DataCollectionRequestSender(), processHelper, DataCollectionLauncherFactory.GetDataCollectorLauncher(processHelper, settingsXml))
+        internal ProxyDataCollectionManager(IRequestData requestData, string settingsXml, IProcessHelper processHelper) : this(requestData, settingsXml, new DataCollectionRequestSender(), processHelper, DataCollectionLauncherFactory.GetDataCollectorLauncher(processHelper, settingsXml))
         {
         }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProxyDataCollectionManager"/> class.
         /// </summary>
+        /// <param name="requestData">
+        /// Request Data providing common execution/discovery services.
+        /// </param>
         /// <param name="settingsXml">
         /// Runsettings that contains the datacollector related configuration.
         /// </param>
@@ -74,13 +90,18 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.DataCollection
         /// <param name="dataCollectionLauncher">
         /// Launches datacollector process.
         /// </param>
-        internal ProxyDataCollectionManager(string settingsXml, IDataCollectionRequestSender dataCollectionRequestSender, IProcessHelper processHelper, IDataCollectionLauncher dataCollectionLauncher)
+        internal ProxyDataCollectionManager(IRequestData requestData, string settingsXml, IDataCollectionRequestSender dataCollectionRequestSender, IProcessHelper processHelper, IDataCollectionLauncher dataCollectionLauncher)
         {
-            this.settingsXml = settingsXml;
+            // DataCollector process needs the information of the Extensions folder
+            // Add the Extensions folder path to runsettings.
+            this.settingsXml = UpdateExtensionsFolderInRunSettings(settingsXml);
+            this.requestData = requestData;
+
             this.dataCollectionRequestSender = dataCollectionRequestSender;
             this.dataCollectionLauncher = dataCollectionLauncher;
             this.processHelper = processHelper;
             this.connectionTimeout = 5 * 1000;
+            this.LogEnabledDataCollectors();
         }
 
         /// <summary>
@@ -240,6 +261,74 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.DataCollection
                     DateTime.Now.ToString("yy-MM-dd_HH-mm-ss_fffff"),
                     new PlatformEnvironment().GetCurrentManagedThreadId(),
                     Path.GetExtension(logFile))).AddDoubleQuote();
+        }
+
+        /// <summary>
+        /// Update Extensions path folder in testadapterspaths in runsettings.
+        /// </summary>
+        /// <param name="settingsXml"></param>
+        private static string UpdateExtensionsFolderInRunSettings(string settingsXml)
+        {
+            if (string.IsNullOrWhiteSpace(settingsXml))
+            {
+                return settingsXml;
+            }
+
+            var extensionsFolder = Path.Combine(Path.GetDirectoryName(typeof(ITestPlatform).GetTypeInfo().Assembly.GetAssemblyLocation()), "Extensions");
+
+            using (var stream = new StringReader(settingsXml))
+            using (var reader = XmlReader.Create(stream, XmlRunSettingsUtilities.ReaderSettings))
+            {
+                var document = new XmlDocument();
+                document.Load(reader);
+
+                var tapNode = RunSettingsProviderExtensions.GetXmlNode(document, "RunConfiguration.TestAdaptersPaths");
+
+                if (tapNode != null && !string.IsNullOrWhiteSpace(tapNode.InnerText))
+                {
+                    extensionsFolder = string.Concat(tapNode.InnerText, ';', extensionsFolder);
+                }
+
+                RunSettingsProviderExtensions.UpdateRunSettingsXmlDocument(document, "RunConfiguration.TestAdaptersPaths", extensionsFolder);
+
+                return document.OuterXml;
+            }
+        }
+
+        /// <summary>
+        /// Log Enabled Data Collectors
+        /// </summary>
+        private void LogEnabledDataCollectors()
+        {
+            if (!this.requestData.IsTelemetryOptedIn)
+            {
+                return;
+            }
+
+            var dataCollectionSettings = XmlRunSettingsUtilities.GetDataCollectionRunSettings(this.settingsXml);
+
+            if (dataCollectionSettings == null || !dataCollectionSettings.IsCollectionEnabled)
+            {
+                return;
+            }
+
+            var enabledDataCollectors = new List<DataCollectorSettings>();
+            foreach (var settings in dataCollectionSettings.DataCollectorSettingsList)
+            {
+                if (settings.IsEnabled)
+                {
+                    if (enabledDataCollectors.Any(dcSettings => string.Equals(dcSettings.FriendlyName, settings.FriendlyName, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        // If Uri or assembly qualified type name is repeated, consider data collector as duplicate and ignore it.
+                        continue;
+                    }
+
+                    enabledDataCollectors.Add(settings);
+                }
+            }
+
+            var dataCollectors = enabledDataCollectors.Select(x => new { x.FriendlyName, x.Uri }.ToString());
+            this.requestData.MetricsCollection.Add(TelemetryDataConstants.DataCollectorsEnabled, string.Join(",", dataCollectors.ToArray()));
         }
     }
 }

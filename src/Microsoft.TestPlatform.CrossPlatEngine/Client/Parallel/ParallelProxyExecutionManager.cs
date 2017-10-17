@@ -6,15 +6,15 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
     using System;
     using System.Collections;
     using System.Collections.Generic;
+    using System.Collections.ObjectModel;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
 
     using Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.DataCollection;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Engine;
-    using System.Threading;
-    using System.Collections.ObjectModel;
 
     /// <summary>
     /// ParallelProxyExecutionManager that manages parallel execution
@@ -22,6 +22,9 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
     internal class ParallelProxyExecutionManager : ParallelOperationManager<IProxyExecutionManager, ITestRunEventsHandler>, IParallelProxyExecutionManager
     {
         #region TestRunSpecificData
+
+        // This variable id to differentiate between implicit (abort requested by testPlatform) and explicit (test host aborted) abort.
+        private bool abortRequested = false;
 
         private int runCompletedClients = 0;
         private int runStartedClients = 0;
@@ -35,12 +38,12 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
 
         private bool hasSpecificTestsRun = false;
 
-        private Task lastParallelRunCleanUpTask = null;
-
         private ITestRunEventsHandler currentRunEventsHandler;
 
         private ParallelRunDataAggregator currentRunDataAggregator;
-        
+
+        private IRequestData requestData;
+
         /// <inheritdoc/>
         public bool IsInitialized { get; private set; } = false;
 
@@ -52,17 +55,20 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
         /// LockObject to update execution status in parallel
         /// </summary>
         private readonly object executionStatusLockObject = new object();
+     
 
         #endregion
 
-        public ParallelProxyExecutionManager(Func<IProxyExecutionManager> actualProxyManagerCreator, int parallelLevel)
+        public ParallelProxyExecutionManager(IRequestData requestData, Func<IProxyExecutionManager> actualProxyManagerCreator, int parallelLevel)
             : base(actualProxyManagerCreator, parallelLevel, true)
         {
+            this.requestData = requestData;
         }
 
-        public ParallelProxyExecutionManager(Func<IProxyExecutionManager> actualProxyManagerCreator, int parallelLevel, bool sharedHosts)
+        public ParallelProxyExecutionManager(IRequestData requestData, Func<IProxyExecutionManager> actualProxyManagerCreator, int parallelLevel, bool sharedHosts)
             : base(actualProxyManagerCreator, parallelLevel, sharedHosts)
         {
+            this.requestData = requestData;
         }
 
         #region IProxyExecutionManager
@@ -116,6 +122,8 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
 
         public void Abort()
         {
+            // Test platform initiated abort.
+            abortRequested = true;
             this.DoActionOnAllManagers((proxyManager) => proxyManager.Abort(), doActionsInParallel: true);
         }
 
@@ -157,7 +165,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
                 // So, we need to keep track of total runcomplete calls
                 this.runCompletedClients++;
 
-                if (testRunCompleteArgs.IsCanceled)
+                if (testRunCompleteArgs.IsCanceled || abortRequested)
                 {
                     allRunsCompleted = this.runCompletedClients == this.runStartedClients;
                 }
@@ -184,11 +192,8 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
 
                 // Dispose concurrent executors
                 // Do not do the cleanuptask in the current thread as we will unncessarily add to execution time
-                this.lastParallelRunCleanUpTask = Task.Run(() =>
-                {
-                    this.UpdateParallelLevel(0);
-                });
-
+                this.UpdateParallelLevel(0);
+                
                 return true;
             }
 
@@ -208,9 +213,9 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
                 this.AddManager(proxyExecutionManager, parallelEventsHandler);
             }
 
-            // If cancel is triggered for any one run, there is no reason to fetch next source
+            // If cancel is triggered for any one run or abort is requested by test platform, there is no reason to fetch next source
             // and queue another test run
-            if (!testRunCompleteArgs.IsCanceled)
+            if (!testRunCompleteArgs.IsCanceled && !abortRequested)
             {
                 this.StartTestRunOnConcurrentManager(proxyExecutionManager);
             }
@@ -220,54 +225,9 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
 
         #endregion
 
-        #region ParallelOperationManager Methods
-
-        protected override void DisposeInstance(IProxyExecutionManager managerInstance)
-        {
-            if (managerInstance != null)
-            {
-                try
-                {
-                    managerInstance.Close();
-                }
-                catch (Exception ex)
-                {
-                    // ignore any exceptions
-                    EqtTrace.Error("ParallelProxyExecutionManager: Failed to dispose execution manager. Exception: " + ex);
-                }
-            }
-        }
-
-        #endregion
-
         private int StartTestRunPrivate(ITestRunEventsHandler runEventsHandler)
         {
             this.currentRunEventsHandler = runEventsHandler;
-
-            // Cleanup Task for cleaning up the parallel executors except for the default one
-            // We do not do this in Sync so that this task does not add up to execution time
-            if (this.lastParallelRunCleanUpTask != null)
-            {
-                try
-                {
-                    if (EqtTrace.IsVerboseEnabled)
-                    {
-                        EqtTrace.Verbose("ProxyParallelExecutionManager: Wait for last cleanup to complete.");
-                    }
-
-                    this.lastParallelRunCleanUpTask.Wait();
-                }
-                catch (Exception ex)
-                {
-                    // if there is an exception disposing off concurrent executors ignore it
-                    if (EqtTrace.IsWarningEnabled)
-                    {
-                        EqtTrace.Warning("ProxyParallelExecutionManager: Exception while invoking an action on ProxyExecutionManager: {0}", ex);
-                    }
-                }
-
-                this.lastParallelRunCleanUpTask = null;
-            }
 
             // Reset the runcomplete data
             this.runCompletedClients = 0;
@@ -290,6 +250,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
             if (concurrentManager is ProxyExecutionManagerWithDataCollection)
             {
                 return new ParallelDataCollectionEventsHandler(
+                            this.requestData,
                             concurrentManager,
                             this.currentRunEventsHandler,
                             this,
@@ -297,6 +258,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client.Parallel
             }
 
             return new ParallelRunEventsHandler(
+                        this.requestData,
                         concurrentManager,
                         this.currentRunEventsHandler,
                         this,

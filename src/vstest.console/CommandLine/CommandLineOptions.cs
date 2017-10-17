@@ -98,6 +98,11 @@ namespace Microsoft.VisualStudio.TestPlatform.CommandLine
         public bool Parallel { get; set; }
 
         /// <summary>
+        /// Specifies whether InIsolation is on or off.
+        /// </summary>
+        public bool InIsolation { get; set; }
+
+        /// <summary>
         /// Readonly collection of all available test sources
         /// </summary>
         public IEnumerable<string> Sources
@@ -167,6 +172,11 @@ namespace Microsoft.VisualStudio.TestPlatform.CommandLine
         /// Test case filter value for run with sources.
         /// </summary>
         public string TestCaseFilterValue { get; set; }
+
+        /// <summary>
+        /// Target Path used by ListFullyQualifiedTests option
+        /// </summary>
+        public string ListTestsTargetPath { get; set; }
 
         /// <summary>
         /// Specifies the Target Device

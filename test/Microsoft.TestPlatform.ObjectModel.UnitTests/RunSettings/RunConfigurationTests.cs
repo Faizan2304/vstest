@@ -33,6 +33,7 @@ namespace Microsoft.TestPlatform.ObjectModel.UnitTests
             Assert.AreEqual(false, runConfiguration.DisableAppDomain);
             Assert.AreEqual(false, runConfiguration.DisableParallelization);
             Assert.AreEqual(false, runConfiguration.DesignMode);
+            Assert.AreEqual(false, runConfiguration.InIsolation);
             Assert.AreEqual(runConfiguration.DesignMode, runConfiguration.ShouldCollectSourceInformation);
             Assert.AreEqual(Constants.DefaultExecutionThreadApartmentState, runConfiguration.ExecutionThreadApartmentState);
         }
@@ -75,6 +76,7 @@ namespace Microsoft.TestPlatform.ObjectModel.UnitTests
                        <TestAdaptersPaths>C:\a\b;D:\x\y</TestAdaptersPaths>
                        <BinariesRoot>E:\x\z</BinariesRoot>
                        <DesignMode>true</DesignMode>
+                       <InIsolation>true</InIsolation>
                        <CollectSourceInformation>false</CollectSourceInformation>
                        <ExecutionThreadApartmentState>STA</ExecutionThreadApartmentState>
                      </RunConfiguration>
@@ -104,6 +106,7 @@ namespace Microsoft.TestPlatform.ObjectModel.UnitTests
             Assert.AreEqual(true, runConfiguration.DisableAppDomain);
             Assert.AreEqual(true, runConfiguration.DisableParallelization);
             Assert.AreEqual(true, runConfiguration.DesignMode);
+            Assert.AreEqual(true, runConfiguration.InIsolation);
             Assert.AreEqual(false, runConfiguration.ShouldCollectSourceInformation);
             Assert.AreEqual(PlatformApartmentState.STA, runConfiguration.ExecutionThreadApartmentState);
         }
@@ -132,14 +135,29 @@ namespace Microsoft.TestPlatform.ObjectModel.UnitTests
              @"<?xml version=""1.0"" encoding=""utf-8""?>
                 <RunSettings>
                      <RunConfiguration>
-                       <TestSessionTimeout>0</TestSessionTimeout>
+                       <TestSessionTimeout>-1</TestSessionTimeout>
                      </RunConfiguration>
                 </RunSettings>";
 
 
             Assert.That.Throws<SettingsException>(
                     () => XmlRunSettingsUtilities.GetRunConfigurationNode(settingsXml))
-                    .WithExactMessage("Invalid settings 'RunConfiguration'.  Invalid value '0' specified for 'TestSessionTimeout'.");
+                    .WithExactMessage("Invalid settings 'RunConfiguration'.  Invalid value '-1' specified for 'TestSessionTimeout'.");
+        }
+
+        [TestMethod]
+        public void RunConfigurationFromXmlShouldNotThrowsSettingsExceptionIfTestSessionTimeoutIsZero()
+        {
+            string settingsXml =
+             @"<?xml version=""1.0"" encoding=""utf-8""?>
+                <RunSettings>
+                     <RunConfiguration>
+                       <TestSessionTimeout>0</TestSessionTimeout>
+                     </RunConfiguration>
+                </RunSettings>";
+
+
+            XmlRunSettingsUtilities.GetRunConfigurationNode(settingsXml);
         }
 
         [TestMethod]

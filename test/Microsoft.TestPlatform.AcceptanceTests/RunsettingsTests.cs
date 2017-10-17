@@ -22,9 +22,9 @@ namespace Microsoft.TestPlatform.AcceptanceTests
         [CustomDataTestMethod]
         [NETFullTargetFramework]
         [NETCORETargetFramework]
-        public void CommandLineRunSettingsShouldWinAmongAllOptions(string runnerFramework, string targetFramework, string targetRuntime)
+        public void CommandLineRunSettingsShouldWinAmongAllOptions(RunnerInfo runnerInfo)
         {
-            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerFramework, targetFramework, targetRuntime);
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
 
             var targetPlatform = "x86";
             var testhostProcessName = this.GetTestHostProcessName(targetPlatform);
@@ -59,9 +59,9 @@ namespace Microsoft.TestPlatform.AcceptanceTests
         [CustomDataTestMethod]
         [NETFullTargetFramework]
         [NETCORETargetFramework]
-        public void CLIRunsettingsShouldWinBetweenCLISwitchesAndCLIRunsettings(string runnerFramework, string targetFramework, string targetRuntime)
+        public void CLIRunsettingsShouldWinBetweenCLISwitchesAndCLIRunsettings(RunnerInfo runnerInfo)
         {
-            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerFramework, targetFramework, targetRuntime);
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
 
             var targetPlatform = "x86";
             var testhostProcessName = this.GetTestHostProcessName(targetPlatform);
@@ -93,9 +93,9 @@ namespace Microsoft.TestPlatform.AcceptanceTests
         [CustomDataTestMethod]
         [NETFullTargetFramework]
         [NETCORETargetFramework]
-        public void CommandLineSwitchesShouldWinBetweenSettingsFileAndCommandLineSwitches(string runnerFramework, string targetFramework, string targetRuntime)
+        public void CommandLineSwitchesShouldWinBetweenSettingsFileAndCommandLineSwitches(RunnerInfo runnerInfo)
         {
-            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerFramework, targetFramework, targetRuntime);
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
 
             var targetPlatform = "x86";
             var testhostProcessName = this.GetTestHostProcessName(targetPlatform);
@@ -119,9 +119,9 @@ namespace Microsoft.TestPlatform.AcceptanceTests
         [CustomDataTestMethod]
         [NETFullTargetFramework]
         [NETCORETargetFramework]
-        public void RunSettingsWithoutParallelAndPlatformX86(string runnerFramework, string targetFramework, string targetRuntime)
+        public void RunSettingsWithoutParallelAndPlatformX86(RunnerInfo runnerInfo)
         {
-            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerFramework, targetFramework, targetRuntime);
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
 
             var targetPlatform = "x86";
             var testhostProcessName = this.GetTestHostProcessName(targetPlatform);
@@ -140,9 +140,9 @@ namespace Microsoft.TestPlatform.AcceptanceTests
         [CustomDataTestMethod]
         [NETFullTargetFramework]
         [NETCORETargetFramework]
-        public void RunSettingsParamsAsArguments(string runnerFramework, string targetFramework, string targetRuntime)
+        public void RunSettingsParamsAsArguments(RunnerInfo runnerInfo)
         {
-            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerFramework, targetFramework, targetRuntime);
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
 
             var targetPlatform = "x86";
             var testhostProcessName = this.GetTestHostProcessName(targetPlatform);
@@ -164,9 +164,9 @@ namespace Microsoft.TestPlatform.AcceptanceTests
         [CustomDataTestMethod]
         [NETFullTargetFramework]
         [NETCORETargetFramework]
-        public void RunSettingsAndRunSettingsParamsAsArguments(string runnerFramework, string targetFramework, string targetRuntime)
+        public void RunSettingsAndRunSettingsParamsAsArguments(RunnerInfo runnerInfo)
         {
-            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerFramework, targetFramework, targetRuntime);
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
 
             var targetPlatform = "x86";
             var testhostProcessName = this.GetTestHostProcessName(targetPlatform);
@@ -192,15 +192,12 @@ namespace Microsoft.TestPlatform.AcceptanceTests
             this.RunTestWithRunSettings(runConfigurationDictionary, runSettingsArgs, null, testhostProcessName, expectedNumOfProcessCreated);
         }
 
-        // Randomly failing with error "The active test run was aborted. Reason: Destination array was not long enough.
-        // Check destIndex and length, and the array's lower bounds. Test Run Failed."
-        // Issue: https://github.com/Microsoft/vstest/issues/292
         [CustomDataTestMethod]
         [NETFullTargetFramework]
         [NETCORETargetFramework]
-        public void RunSettingsWithParallelAndPlatformX64(string runnerFramework, string targetFramework, string targetRuntime)
+        public void RunSettingsWithParallelAndPlatformX64(RunnerInfo runnerInfo)
         {
-            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerFramework, targetFramework, targetRuntime);
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
 
             var targetPlatform = "x64";
             var testhostProcessName = this.GetTestHostProcessName(targetPlatform);
@@ -221,11 +218,11 @@ namespace Microsoft.TestPlatform.AcceptanceTests
         }
 
         [CustomDataTestMethod]
-        [NETFullTargetFramework]
+        [NETFullTargetFramework(inIsolation: true, inProcess: true)]
         [NETCORETargetFramework]
-        public void TestAdapterPathFromRunSettings(string runnerFramework, string targetFramework, string targetRuntime)
+        public void TestAdapterPathFromRunSettings(RunnerInfo runnerInfo)
         {
-            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerFramework, targetFramework, targetRuntime);
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
 
             var runConfigurationDictionary = new Dictionary<string, string>
                                                  {
@@ -236,7 +233,7 @@ namespace Microsoft.TestPlatform.AcceptanceTests
                 this.GetSampleTestAssembly(),
                 string.Empty,
                 runsettingsFilePath,
-                this.FrameworkArgValue);
+                runnerInfo.InIsolationValue);
             this.InvokeVsTest(arguments);
             this.ValidateSummaryStatus(1, 1, 1);
             File.Delete(runsettingsFilePath);
@@ -264,16 +261,16 @@ namespace Microsoft.TestPlatform.AcceptanceTests
                 runsettingsPath = this.GetRunsettingsFilePath(runConfigurationDictionary);
             }
 
-            var arguments = PrepareArguments(assemblyPaths, this.GetTestAdapterPath(), runsettingsPath, this.FrameworkArgValue);
-
-            if (!string.IsNullOrWhiteSpace(runSettingsArgs))
-            {
-                arguments = string.Concat(arguments, " -- ", runSettingsArgs);
-            }
+            var arguments = PrepareArguments(assemblyPaths, this.GetTestAdapterPath(), runsettingsPath, this.testEnvironment.InIsolationValue);
 
             if (!string.IsNullOrWhiteSpace(additionalArgs))
             {
                 arguments = string.Concat(arguments, " ", additionalArgs);
+            }
+
+            if (!string.IsNullOrWhiteSpace(runSettingsArgs))
+            {
+                arguments = string.Concat(arguments, " -- ", runSettingsArgs);
             }
 
             var cts = new CancellationTokenSource();

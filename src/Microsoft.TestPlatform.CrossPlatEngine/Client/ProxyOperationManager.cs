@@ -10,9 +10,11 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
     using System.Linq;
     using System.Reflection;
     using System.Threading;
+
     using Microsoft.VisualStudio.TestPlatform.CommunicationUtilities.Interfaces;
     using Microsoft.VisualStudio.TestPlatform.CoreUtilities.Extensions;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel;
+    using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Host;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
     using Microsoft.VisualStudio.TestPlatform.PlatformAbstractions;
@@ -40,6 +42,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
         private bool initialized;
         private string testHostProcessStdError;
         private bool testHostLaunched;
+        private IRequestData requestData;
 
         #region Constructors
 
@@ -49,7 +52,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
         /// <param name="requestSender">Request Sender instance.</param>
         /// <param name="testHostManager">Test host manager instance.</param>
         /// <param name="clientConnectionTimeout">Client Connection Timeout.</param>
-        protected ProxyOperationManager(ITestRequestSender requestSender, ITestRuntimeProvider testHostManager, int clientConnectionTimeout)
+        protected ProxyOperationManager(IRequestData requestData, ITestRequestSender requestSender, ITestRuntimeProvider testHostManager, int clientConnectionTimeout)
         {
             this.RequestSender = requestSender;
             this.connectionTimeout = clientConnectionTimeout;
@@ -58,6 +61,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
             this.initialized = false;
             this.testHostLaunched = false;
             this.testHostProcessId = -1;
+            this.requestData = requestData;
         }
 
         #endregion
@@ -91,6 +95,12 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
         {
             var connTimeout = this.connectionTimeout;
 
+            var userSpecifiedTimeout = Environment.GetEnvironmentVariable("VSTEST_CONNECTION_TIMEOUT");
+            if(!string.IsNullOrEmpty(userSpecifiedTimeout) && Int32.TryParse(userSpecifiedTimeout, out int result))
+            {
+                connTimeout = result * 1000;
+            }
+            
             if (!this.initialized)
             {
                 this.testHostProcessStdError = string.Empty;
@@ -224,7 +234,9 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
         /// </returns>
         protected virtual TestProcessStartInfo UpdateTestProcessStartInfo(TestProcessStartInfo testProcessStartInfo)
         {
-            // do nothing. 
+            // Update Telemetry Opt in status because by default in Test Host Telemetry is opted out
+            var telemetryOptedIn = this.requestData.IsTelemetryOptedIn ? "true" : "false";
+            testProcessStartInfo.Arguments += " --telemetryoptedin " + telemetryOptedIn;
             return testProcessStartInfo;
         }
 

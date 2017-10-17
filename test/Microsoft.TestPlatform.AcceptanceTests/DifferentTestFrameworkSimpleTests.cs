@@ -12,58 +12,74 @@ namespace Microsoft.TestPlatform.AcceptanceTests
     public class DifferentTestFrameworkSimpleTests : AcceptanceTestBase
     {
         [CustomDataTestMethod]
-        [NETFullTargetFramework]
-        public void ChutzpahRunAllTestExecution(string runnerFramework, string targetFramework, string targetRuntime)
+        [NETFullTargetFramework(inIsolation: true, inProcess: true)]
+        public void ChutzpahRunAllTestExecution(RunnerInfo runnerInfo)
         {
-            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerFramework, targetFramework, targetRuntime);
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
 
             var testJSFileAbsolutePath = Path.Combine(this.testEnvironment.TestAssetsPath, "test.js");
             var arguments = PrepareArguments(
                 testJSFileAbsolutePath,
                 this.GetTestAdapterPath(UnitTestFramework.Chutzpah),
                 string.Empty,
-                this.FrameworkArgValue);
+                runnerInfo.InIsolationValue);
             this.InvokeVsTest(arguments);
             this.ValidateSummaryStatus(1, 1, 0);
         }
 
         [CustomDataTestMethod]
-        [NETFullTargetFramework]
-        public void CPPRunAllTestExecution(string runnerFramework, string targetFramework, string targetRuntime)
+        [NETFullTargetFramework(inIsolation: true, inProcess: true)]
+        public void CPPRunAllTestExecution(RunnerInfo runnerInfo)
         {
-            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerFramework, targetFramework, targetRuntime);
-            CppRunAllTests(runnerFramework, "x86");
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
+            CppRunAllTests(runnerInfo.RunnerFramework, "x86");
         }
 
         [CustomDataTestMethod]
         [NETFullTargetFramework]
-        public void CPPRunAllTestExecutionPlatformx64(string runnerFramework, string targetFramework, string targetRuntime)
+        public void CPPRunAllTestExecutionPlatformx64(RunnerInfo runnerInfo)
         {
-            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerFramework, targetFramework, targetRuntime);
-            CppRunAllTests(runnerFramework, "x64");
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
+            CppRunAllTests(runnerInfo.RunnerFramework, "x64");
         }
 
         [CustomDataTestMethod]
         [NETFullTargetFramework]
-        public void NUnitRunAllTestExecution(string runnerFramework, string targetFramework, string targetRuntime)
+        public void WebTestRunAllTests(RunnerInfo runnerInfo)
         {
-            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerFramework, targetFramework, targetRuntime);
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
+            WebTestRunAllTests(runnerInfo.RunnerFramework);
+        }
+
+        [CustomDataTestMethod]
+        [NETFullTargetFramework]
+        public void CodedWebTestRunAllTests(RunnerInfo runnerInfo)
+        {
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
+            CodedWebTestRunAllTests(runnerInfo.RunnerFramework);
+        }
+
+        [CustomDataTestMethod]
+        [NETFullTargetFramework(inIsolation: true, inProcess: true)]
+        public void NUnitRunAllTestExecution(RunnerInfo runnerInfo)
+        {
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
 
             var arguments = PrepareArguments(
                 this.GetAssetFullPath("NUTestProject.dll"),
                 this.GetTestAdapterPath(UnitTestFramework.NUnit),
                 string.Empty,
-                this.FrameworkArgValue);
+                runnerInfo.InIsolationValue);
             this.InvokeVsTest(arguments);
             this.ValidateSummaryStatus(1, 1, 0);
         }
 
         [CustomDataTestMethod]
-        [NETFullTargetFramework]
+        [NETFullTargetFramework(inIsolation: true, inProcess: true)]
         [NETCORETargetFramework]
-        public void XUnitRunAllTestExecution(string runnerFramework, string targetFramework, string targetRuntime)
+        public void XUnitRunAllTestExecution(RunnerInfo runnerInfo)
         {
-            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerFramework, targetFramework, targetRuntime);
+            AcceptanceTestBase.SetTestEnvironment(this.testEnvironment, runnerInfo);
             string testAssemblyPath = null;
 
             // Xunit >= 2.2 won't support net451, Minimum target framework it supports is net452.
@@ -80,7 +96,7 @@ namespace Microsoft.TestPlatform.AcceptanceTests
                 testAssemblyPath,
                 this.GetTestAdapterPath(UnitTestFramework.XUnit),
                 string.Empty,
-                this.FrameworkArgValue);
+                runnerInfo.InIsolationValue);
             this.InvokeVsTest(arguments);
             this.ValidateSummaryStatus(1, 1, 0);
         }
@@ -103,11 +119,50 @@ namespace Microsoft.TestPlatform.AcceptanceTests
                 assemblyAbsolutePath,
                 string.Empty,
                 string.Empty,
-                this.FrameworkArgValue);
+                this.testEnvironment.InIsolationValue);
 
-            arguments = string.Concat(arguments, $" /platform:{platform}");
             this.InvokeVsTest(arguments);
             this.ValidateSummaryStatus(1, 1, 0);
+        }
+
+        private void WebTestRunAllTests(string runnerFramework)
+        {
+            if (runnerFramework.StartsWith("netcoreapp"))
+            {
+                Assert.Inconclusive("WebTests tests not supported with .Netcore runner.");
+                return;
+            }
+
+            string assemblyRelativePath =
+                @"microsoft.testplatform.qtools.assets\2.0.0\contentFiles\any\any\WebTestAssets\WebTest1.webtest";
+            var assemblyAbsolutePath = Path.Combine(this.testEnvironment.PackageDirectory, assemblyRelativePath);
+            var arguments = PrepareArguments(
+                assemblyAbsolutePath,
+                string.Empty,
+                string.Empty);
+
+            this.InvokeVsTest(arguments);
+            this.ValidateSummaryStatus(1, 0, 0);
+        }
+
+        private void CodedWebTestRunAllTests(string runnerFramework)
+        {
+            if (runnerFramework.StartsWith("netcoreapp"))
+            {
+                Assert.Inconclusive("WebTests tests not supported with .Netcore runner.");
+                return;
+            }
+
+            string assemblyRelativePath =
+                @"microsoft.testplatform.qtools.assets\2.0.0\contentFiles\any\any\WebTestAssets\BingWebTest.dll";
+            var assemblyAbsolutePath = Path.Combine(this.testEnvironment.PackageDirectory, assemblyRelativePath);
+            var arguments = PrepareArguments(
+                assemblyAbsolutePath,
+                string.Empty,
+                string.Empty);
+
+            this.InvokeVsTest(arguments);
+            this.ValidateSummaryStatus(1, 0, 0);
         }
     }
 }

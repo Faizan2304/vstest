@@ -20,7 +20,6 @@ namespace Microsoft.VisualStudio.TestPlatform.Client
     using Microsoft.VisualStudio.TestPlatform.ObjectModel;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Engine;
-    using Microsoft.VisualStudio.TestPlatform.ObjectModel.Host;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Utilities;
     using Microsoft.VisualStudio.TestPlatform.PlatformAbstractions;
     using Microsoft.VisualStudio.TestPlatform.Utilities.Helpers;
@@ -77,11 +76,11 @@ namespace Microsoft.VisualStudio.TestPlatform.Client
         /// <summary>
         /// The create discovery request.
         /// </summary>
+        /// <param name="requestData"></param>
         /// <param name="discoveryCriteria"> The discovery criteria. </param>
-        /// <param name="protocolConfig"> Protocol related information.  </param>
         /// <returns> The <see cref="IDiscoveryRequest"/>. </returns>
         /// <exception cref="ArgumentNullException"> Throws if parameter is null. </exception>
-        public IDiscoveryRequest CreateDiscoveryRequest(DiscoveryCriteria discoveryCriteria, ProtocolConfig protocolConfig)
+        public IDiscoveryRequest CreateDiscoveryRequest(IRequestData requestData, DiscoveryCriteria discoveryCriteria)
         {
             if (discoveryCriteria == null)
             {
@@ -91,16 +90,23 @@ namespace Microsoft.VisualStudio.TestPlatform.Client
             // Update cache with Extension Folder's files
             this.AddExtensionAssemblies(discoveryCriteria.RunSettings);
 
+            // Update and initialize loggers only when DesignMode is false
+            var runConfiguration = XmlRunSettingsUtilities.GetRunConfigurationNode(discoveryCriteria.RunSettings);
+            if (runConfiguration.DesignMode == false)
+            {
+                this.AddExtensionAssembliesFromSource(discoveryCriteria.Sources);
+
+                // Initialize loggers
+                TestLoggerManager.Instance.InitializeLoggers(requestData);
+            }
+
             var testHostManager = this.testHostProviderManager.GetTestHostManagerByRunConfiguration(discoveryCriteria.RunSettings);
             testHostManager.Initialize(TestSessionMessageLogger.Instance, discoveryCriteria.RunSettings);
 
-            // Allow TestRuntimeProvider to update source map, this is required for remote scenarios.
-            UpdateTestSources(discoveryCriteria.Sources, discoveryCriteria.AdapterSourceMap, testHostManager);
-
-            var discoveryManager = this.TestEngine.GetDiscoveryManager(testHostManager, discoveryCriteria, protocolConfig);
+            var discoveryManager = this.TestEngine.GetDiscoveryManager(requestData, testHostManager, discoveryCriteria);
             discoveryManager.Initialize();
 
-            return new DiscoveryRequest(discoveryCriteria, discoveryManager);
+            return new DiscoveryRequest(requestData, discoveryCriteria, discoveryManager);
         }
 
         /// <summary>
@@ -110,7 +116,7 @@ namespace Microsoft.VisualStudio.TestPlatform.Client
         /// <param name="protocolConfig"> Protocol related information.  </param>
         /// <returns> The <see cref="ITestRunRequest"/>. </returns>
         /// <exception cref="ArgumentNullException"> Throws if parameter is null. </exception>
-        public ITestRunRequest CreateTestRunRequest(TestRunCriteria testRunCriteria, ProtocolConfig protocolConfig)
+        public ITestRunRequest CreateTestRunRequest(IRequestData requestData, TestRunCriteria testRunCriteria)
         {
             if (testRunCriteria == null)
             {
@@ -127,28 +133,21 @@ namespace Microsoft.VisualStudio.TestPlatform.Client
                 this.AddExtensionAssembliesFromSource(testRunCriteria);
 
                 // Initialize loggers
-                TestLoggerManager.Instance.InitializeLoggers();
+                TestLoggerManager.Instance.InitializeLoggers(requestData);
             }
 
             var testHostManager = this.testHostProviderManager.GetTestHostManagerByRunConfiguration(testRunCriteria.TestRunSettings);
             testHostManager.Initialize(TestSessionMessageLogger.Instance, testRunCriteria.TestRunSettings);
-
-            // Allow TestRuntimeProvider to update source map, this is required for remote scenarios.
-            // If we run for specific tests, then we expect the test case object to contain correct source path for remote scenario as well
-            if (!testRunCriteria.HasSpecificTests)
-            {
-                UpdateTestSources(testRunCriteria.Sources, testRunCriteria.AdapterSourceMap, testHostManager);
-            }
 
             if (testRunCriteria.TestHostLauncher != null)
             {
                 testHostManager.SetCustomLauncher(testRunCriteria.TestHostLauncher);
             }
 
-            var executionManager = this.TestEngine.GetExecutionManager(testHostManager, testRunCriteria, protocolConfig);
+            var executionManager = this.TestEngine.GetExecutionManager(requestData, testHostManager, testRunCriteria);
             executionManager.Initialize();
 
-            return new TestRunRequest(testRunCriteria, executionManager);
+            return new TestRunRequest(requestData, testRunCriteria, executionManager);
         }
 
         /// <summary>
@@ -163,24 +162,19 @@ namespace Microsoft.VisualStudio.TestPlatform.Client
         /// The update extensions.
         /// </summary>
         /// <param name="pathToAdditionalExtensions"> The path to additional extensions. </param>
-        /// <param name="loadOnlyWellKnownExtensions"> The load only well known extensions. </param>
-        public void UpdateExtensions(IEnumerable<string> pathToAdditionalExtensions, bool loadOnlyWellKnownExtensions)
+        /// <param name="skipExtensionFilters">Skips filtering by name (if true).</param>
+        public void UpdateExtensions(IEnumerable<string> pathToAdditionalExtensions, bool skipExtensionFilters)
         {
             this.TestEngine.GetExtensionManager()
-                   .UseAdditionalExtensions(pathToAdditionalExtensions, loadOnlyWellKnownExtensions);
+                   .UseAdditionalExtensions(pathToAdditionalExtensions, skipExtensionFilters);
         }
 
         /// <summary>
-        /// Update the AdapterSourceMap
+        /// Clears the cached extensions
         /// </summary>
-        /// <param name="sources">test sources</param>
-        /// <param name="adapterSourceMap">Adapter Source Map</param>
-        /// <param name="testRuntimeProvider">testhostmanager which updates the sources</param>
-        private void UpdateTestSources(IEnumerable<string> sources, Dictionary<string, IEnumerable<string>> adapterSourceMap, ITestRuntimeProvider testRuntimeProvider)
+        public void ClearExtensions()
         {
-            var updatedTestSources = testRuntimeProvider.GetTestSources(sources);
-            adapterSourceMap.Clear();
-            adapterSourceMap.Add(ObjectModel.Constants.UnspecifiedAdapterPath, updatedTestSources);
+            this.TestEngine.GetExtensionManager().ClearExtensions();
         }
 
         /// <summary>
@@ -211,14 +205,14 @@ namespace Microsoft.VisualStudio.TestPlatform.Client
                     var extensionAssemblies = new List<string>(this.fileHelper.EnumerateFiles(adapterPath, SearchOption.AllDirectories, TestPlatformConstants.TestAdapterEndsWithPattern, TestPlatformConstants.TestLoggerEndsWithPattern, TestPlatformConstants.RunTimeEndsWithPattern, TestPlatformConstants.SettingsProviderEndsWithPattern));
                     if (extensionAssemblies.Count > 0)
                     {
-                        this.UpdateExtensions(extensionAssemblies, true);
+                        this.UpdateExtensions(extensionAssemblies, skipExtensionFilters: false);
                     }
                 }
             }
         }
 
         /// <summary>
-        /// Update the test logger paths from source directory
+        /// Update the extension assemblies from source directory
         /// </summary>
         /// <param name="testRunCriteria">
         /// The test Run Criteria.
@@ -232,6 +226,15 @@ namespace Microsoft.VisualStudio.TestPlatform.Client
                 sources = testRunCriteria.Tests.Select(tc => tc.Source).Distinct();
             }
 
+            AddExtensionAssembliesFromSource(sources);
+        }
+
+        /// <summary>
+        /// Update the test logger paths from source directory
+        /// </summary>
+        /// <param name="sources"></param>
+        private void AddExtensionAssembliesFromSource(IEnumerable<string> sources)
+        {
             // Currently we support discovering loggers only from Source directory
             var loggersToUpdate = new List<string>();
 
@@ -246,7 +249,7 @@ namespace Microsoft.VisualStudio.TestPlatform.Client
 
             if (loggersToUpdate.Count > 0)
             {
-                this.UpdateExtensions(loggersToUpdate, true);
+                this.UpdateExtensions(loggersToUpdate, skipExtensionFilters: false);
             }
         }
 

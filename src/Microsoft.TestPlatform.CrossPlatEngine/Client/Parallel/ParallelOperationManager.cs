@@ -5,12 +5,13 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
 {
     using System;
     using System.Collections;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
+
     using Microsoft.VisualStudio.TestPlatform.ObjectModel;
     using Microsoft.VisualStudio.TestPlatform.ObjectModel.Engine;
-    using System.Collections.Concurrent;
 
     /// <summary>
     /// Abstract class having common parallel manager implementation
@@ -66,7 +67,6 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
         public void RemoveManager(T manager)
         {
             this.concurrentManagerHandlerMap.Remove(manager);
-            this.DisposeInstance(manager);
         }
 
         /// <summary>
@@ -181,7 +181,7 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
             {
                 foreach (var managerInstance in this.GetConcurrentManagerInstances())
                 {
-                    this.DisposeInstance(managerInstance);
+                    this.RemoveManager(managerInstance);
                 }
             }
 
@@ -253,12 +253,6 @@ namespace Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Client
 
             return hasNext;
         }
-
-        #region AbstractMethods
-
-        protected abstract void DisposeInstance(T managerInstance);
-
-        #endregion
     }
 }
 
